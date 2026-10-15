@@ -27,12 +27,21 @@
     <button id="prev" class="btn" aria-label="Página anterior">‹</button>
     <span id="contador" class="contador" aria-live="polite"></span>
     <button id="next" class="btn" aria-label="Página siguiente">›</button>
+    <button id="leer" class="btn" aria-label="Leer página ampliada">🔍 Leer</button>
     <button id="compartir" class="btn">Compartir</button>
   </nav>
+  <div id="ayuda-leer" class="ayuda-leer" role="status" hidden>Toca 🔍 o dos veces la página para leer más grande</div>
 
-  <div id="overlay" class="overlay" hidden>
-    <button id="cerrar" class="btn cerrar">Cerrar</button>
-    <div class="overlay-scroll"><img id="overlay-img" alt=""></div>
+  <div id="lectura" class="lectura" role="dialog" aria-modal="true" aria-label="Modo lectura" hidden>
+    <div class="lec-barra">
+      <button id="lec-prev" class="btn" type="button" aria-label="Página anterior">‹</button>
+      <span id="lec-pag" class="lec-pag" aria-live="polite"></span>
+      <button id="lec-next" class="btn" type="button" aria-label="Página siguiente">›</button>
+      <button id="lec-cerrar" class="btn" type="button">✕ Cerrar</button>
+    </div>
+    <div id="lec-vista" class="lec-vista">
+      <div id="lec-lienzo" class="lec-lienzo"><img id="lec-img" alt="" draggable="false"></div>
+    </div>
   </div>
 
   <section id="panel-comentarios" class="panel-comentarios" aria-hidden="true" aria-label="Comentarios">

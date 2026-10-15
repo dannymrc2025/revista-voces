@@ -121,21 +121,150 @@
     actualizarUI();
   }
 
-  // Zoom HD
-  function abrirZoom(i) {
-    const img = $('overlay-img');
-    img.alt = `Página ${i + 1}`;
-    img.src = src(i, 'hd');
-    $('overlay').hidden = false;
+  // Modo lectura: la imagen HD ocupa el ancho; el zoom cambia su ancho y el desplazamiento es nativo.
+  const lectura = $('lectura');
+  const vista = $('lec-vista');
+  const lienzo = $('lec-lienzo');
+  const limg = $('lec-img');
+  const ZOOM_MAX = 4;
+  let lec = 0;
+  let esc = 1;
+  let cargaHd = 0;
+
+  function mostrarLectura(i) {
+    lec = Math.max(0, Math.min(total - 1, i));
+    esc = 1;
+    lienzo.style.width = '100%';
+    vista.scrollTop = 0;
+    vista.scrollLeft = 0;
+    limg.style.aspectRatio = `${info.ancho} / ${info.alto}`;
+    limg.alt = `Página ${lec + 1}`;
+    const token = ++cargaHd;
+    limg.src = src(lec, 'm');
+    const hd = new Image();
+    hd.onload = () => { if (token === cargaHd) limg.src = hd.src; };
+    hd.src = src(lec, 'hd');
+    if (lec + 1 < total) new Image().src = src(lec + 1, 'hd');
+    $('lec-pag').textContent = `Página ${lec + 1} de ${total}`;
+    $('lec-prev').disabled = lec === 0;
+    $('lec-next').disabled = lec >= total - 1;
+  }
+
+  function abrirLectura(i) {
+    ocultarAyuda();
+    mostrarLectura(i);
+    lectura.hidden = false;
     overlayAbierto = true;
-    $('cerrar').focus();
+    $('lec-cerrar').focus({ preventScroll: true });
   }
-  function cerrarZoom() {
-    $('overlay').hidden = true;
-    $('overlay-img').removeAttribute('src');
+  function cerrarLectura() {
+    lectura.hidden = true;
+    cargaHd++;
+    limg.removeAttribute('src');
     overlayAbierto = false;
+    if (flip) {
+      try { flip.turnToPage(lec); } catch { /* se queda donde estaba */ }
+      actual = flip.getCurrentPageIndex();
+      cargar(actual);
+      actualizarUI();
+    }
   }
-  $('cerrar').addEventListener('click', cerrarZoom);
+  $('lec-cerrar').addEventListener('click', cerrarLectura);
+  $('lec-prev').addEventListener('click', () => mostrarLectura(lec - 1));
+  $('lec-next').addEventListener('click', () => mostrarLectura(lec + 1));
+  $('leer').addEventListener('click', () => abrirLectura(actual));
+
+  // Acerca o aleja manteniendo el punto (cx, cy) bajo (tx, ty).
+  function zoom(nuevo, cx, cy, tx = cx, ty = cy) {
+    nuevo = Math.min(ZOOM_MAX, Math.max(1, nuevo));
+    const r = lienzo.getBoundingClientRect();
+    const px = (cx - r.left) / esc;
+    const py = (cy - r.top) / esc;
+    esc = nuevo;
+    lienzo.style.width = `${esc * 100}%`;
+    const r2 = lienzo.getBoundingClientRect();
+    vista.scrollLeft += r2.left + px * esc - tx;
+    vista.scrollTop += r2.top + py * esc - ty;
+  }
+
+  const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  const medio = (t) => ({ x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 });
+  let pinch = null;
+  let multi = false;
+  let deslizar = null;
+
+  vista.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      multi = true;
+      deslizar = null;
+      pinch = { d: dist(e.touches), s: esc };
+    } else if (e.touches.length === 1 && !multi) {
+      const t = e.touches[0];
+      deslizar = esc === 1 && vista.scrollTop <= 0 ? { x: t.clientX, y: t.clientY } : null;
+    }
+  }, { passive: true });
+  vista.addEventListener('touchmove', (e) => {
+    if (pinch && e.touches.length === 2) {
+      e.preventDefault();
+      const m = medio(e.touches);
+      zoom(pinch.s * (dist(e.touches) / pinch.d), m.x, m.y);
+    }
+  }, { passive: false });
+  vista.addEventListener('touchend', (e) => {
+    if (e.touches.length < 2) pinch = null;
+    if (e.touches.length > 0) return;
+    if (esc < 1.05 && esc !== 1) zoom(1, innerWidth / 2, innerHeight / 2);
+    const t = e.changedTouches[0];
+    if (deslizar && !multi && t) {
+      const dy = t.clientY - deslizar.y;
+      if (dy > 100 && dy > 1.5 * Math.abs(t.clientX - deslizar.x) && esc === 1 && vista.scrollTop <= 0) cerrarLectura();
+    }
+    deslizar = null;
+    setTimeout(() => { multi = false; }, 0);
+  }, { passive: true });
+  vista.addEventListener('touchcancel', () => { pinch = null; deslizar = null; multi = false; }, { passive: true });
+
+  // Doble toque: 1x -> 2.5x centrado en el punto tocado; con zoom vuelve a 1x.
+  let ult = { t: 0, x: 0, y: 0 };
+  let desde = null;
+  vista.addEventListener('pointerdown', (e) => { desde = { x: e.clientX, y: e.clientY }; });
+  vista.addEventListener('pointerup', (e) => {
+    if (!desde || multi) { desde = null; return; }
+    const movido = Math.hypot(e.clientX - desde.x, e.clientY - desde.y) > 10;
+    desde = null;
+    if (movido) { ult.t = 0; return; }
+    const ahora = Date.now();
+    if (ahora - ult.t < 350 && Math.hypot(e.clientX - ult.x, e.clientY - ult.y) < 40) {
+      ult.t = 0;
+      if (esc === 1) zoom(2.5, e.clientX, e.clientY, innerWidth / 2, innerHeight / 2);
+      else zoom(1, e.clientX, e.clientY);
+    } else {
+      ult = { t: ahora, x: e.clientX, y: e.clientY };
+    }
+  });
+
+  // Ayuda de la primera visita en pantallas pequeñas
+  const AYUDA_KEY = 'voces-ayuda-lectura';
+  const globo = $('ayuda-leer');
+  let tAyuda = null;
+  function ocultarAyuda() {
+    clearTimeout(tAyuda);
+    globo.hidden = true;
+  }
+  function mostrarAyuda() {
+    try { if (localStorage.getItem(AYUDA_KEY)) return; } catch { return; }
+    if (innerWidth >= 900) return;
+    try { localStorage.setItem(AYUDA_KEY, '1'); } catch { /* sin almacenamiento */ }
+    globo.hidden = false;
+    const r = $('leer').getBoundingClientRect();
+    globo.style.bottom = `${innerHeight - r.top + 10}px`;
+    const w = globo.offsetWidth;
+    globo.style.left = `${Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2))}px`;
+    globo.style.setProperty('--flecha', `${Math.max(12, Math.min(w - 12, r.left + r.width / 2 - parseFloat(globo.style.left)))}px`);
+    tAyuda = setTimeout(ocultarAyuda, 5000);
+  }
+  globo.addEventListener('click', ocultarAyuda);
+  setTimeout(mostrarAyuda, 800);
 
   // Doble toque o doble clic, con el mismo código para ratón y táctil.
   let ultimo = { t: 0, x: 0, y: 0 };
@@ -151,7 +280,7 @@
     if (ahora - ultimo.t < 350 && cerca) {
       ultimo.t = 0;
       const img = document.elementsFromPoint(e.clientX, e.clientY).find((n) => n.matches?.('img[data-i]'));
-      abrirZoom(img ? Number(img.dataset.i) : actual);
+      abrirLectura(img ? Number(img.dataset.i) : actual);
     } else {
       ultimo = { t: ahora, x: e.clientX, y: e.clientY };
     }
@@ -161,9 +290,11 @@
   $('prev').addEventListener('click', () => flip?.flipPrev());
   $('next').addEventListener('click', () => flip?.flipNext());
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && overlayAbierto) cerrarZoom();
-    else if (overlayAbierto) return;
-    else if (e.key === 'ArrowLeft') flip?.flipPrev();
+    if (overlayAbierto) {
+      if (e.key === 'Escape') cerrarLectura();
+      else if (e.key === 'ArrowLeft') mostrarLectura(lec - 1);
+      else if (e.key === 'ArrowRight') mostrarLectura(lec + 1);
+    } else if (e.key === 'ArrowLeft') flip?.flipPrev();
     else if (e.key === 'ArrowRight') flip?.flipNext();
   });
 
