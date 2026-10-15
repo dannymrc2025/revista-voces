@@ -3,6 +3,7 @@ import {
   getFirestore, collection, addDoc, query, where, orderBy, limit, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
+import { claseRol, etiquetaRol } from "./roles.js";
 
 const $ = (id) => document.getElementById(id);
 const ed = new URLSearchParams(location.search).get("ed");
@@ -50,13 +51,12 @@ if (ed && /^[\w.-]+$/.test(ed)) {
     }
     for (const c of items) {
       const art = document.createElement("article");
-      art.className = "c-item";
+      art.className = `c-item ${claseRol(c.rol)}`;
       const cab = document.createElement("div");
       cab.className = "c-cab";
       const n = document.createElement("strong");
       n.textContent = c.nombre;
-      const r = document.createElement("span");
-      r.textContent = c.rol;
+      const r = etiquetaRol(c);
       const f = document.createElement("time");
       f.textContent = c.fecha ? relativa(c.fecha.toDate()) : "";
       cab.append(n, r, f);
@@ -91,6 +91,12 @@ if (ed && /^[\w.-]+$/.test(ed)) {
 
   texto.addEventListener("input", () => { contador.textContent = `${texto.value.length}/500`; });
 
+  const selRol = $("c-rol");
+  const selGrupo = $("c-grupo");
+  const actualizarGrupo = () => { selGrupo.hidden = selRol.value !== "Alumno"; };
+  selRol.addEventListener("change", actualizarGrupo);
+  actualizarGrupo();
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     if ($("c-web").value) return; // honeypot
@@ -98,8 +104,10 @@ if (ed && /^[\w.-]+$/.test(ed)) {
     const nombre = $("c-nombre").value.trim();
     const rol = $("c-rol").value;
     const cuerpo = texto.value.trim();
+    const grupo = rol === "Alumno" ? selGrupo.value : "";
 
     if (nombre.length < 2 || nombre.length > 40) { msg.textContent = "El nombre debe tener de 2 a 40 caracteres."; return; }
+    if (rol === "Alumno" && !grupo) { msg.textContent = "Elige tu grupo"; return; }
     if (cuerpo.length < 3 || cuerpo.length > 500) { msg.textContent = "El comentario debe tener de 3 a 500 caracteres."; return; }
 
     const resto = ESPERA_MS - (Date.now() - leerUltimo());
@@ -111,9 +119,12 @@ if (ed && /^[\w.-]+$/.test(ed)) {
     const boton = $("c-enviar");
     boton.disabled = true;
     try {
-      await addDoc(col, { edicion: ed, nombre, rol, texto: cuerpo, fecha: serverTimestamp(), aprobado: false });
+      const datos = { edicion: ed, nombre, rol, texto: cuerpo, fecha: serverTimestamp(), aprobado: false };
+      if (grupo) datos.grupo = grupo;
+      await addDoc(col, datos);
       guardarUltimo();
       form.reset();
+      actualizarGrupo();
       contador.textContent = "0/500";
       msg.textContent = "¡Gracias! Tu comentario aparecerá cuando sea aprobado.";
     } catch (err) {

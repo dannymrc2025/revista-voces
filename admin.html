@@ -54,6 +54,15 @@
           <h2>Publicados</h2>
           <select id="sel-ed" aria-label="Edición"></select>
         </div>
+        <div class="filtros">
+          <select id="fil-rol" aria-label="Filtrar por rol">
+            <option value="">Todos</option>
+            <option value="Alumno">Alumnos</option>
+            <option value="Docente">Docentes</option>
+            <option value="Padre o madre de familia">Padres de familia</option>
+          </select>
+          <select id="fil-grupo" aria-label="Filtrar por grupo" hidden></select>
+        </div>
         <div id="lista-pub" class="lista"></div>
       </section>
 

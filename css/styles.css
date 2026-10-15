@@ -8,7 +8,20 @@
   --papel: #f6f0e2;
   --titulos: "Cinzel", "Trajan Pro", Georgia, serif;
   --cuerpo: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --c-alumno: #4fb3d9;
+  --c-alumno-15: rgba(79, 179, 217, .15);
+  --c-docente: #e3b14a;
+  --c-docente-15: rgba(227, 177, 74, .15);
+  --c-padre: #e07a5f;
+  --c-padre-15: rgba(224, 122, 95, .15);
+  --c-otro: #aab4af;
+  --c-otro-15: rgba(170, 180, 175, .15);
 }
+.rol-alumno { --rol: var(--c-alumno); --rol-bg: var(--c-alumno-15); }
+.rol-docente { --rol: var(--c-docente); --rol-bg: var(--c-docente-15); }
+.rol-padre { --rol: var(--c-padre); --rol-bg: var(--c-padre-15); }
+.rol-otro { --rol: var(--c-otro); --rol-bg: var(--c-otro-15); }
+.rol-pill { display: inline-block; padding: .05rem .6rem; border-radius: 999px; font-weight: 700; color: var(--rol); background: var(--rol-bg); }
 * { box-sizing: border-box; }
 html { background: var(--fondo); }
 body {
@@ -116,10 +129,11 @@ body.visor {
 .panel-cab { display: flex; justify-content: space-between; align-items: center; padding: .6rem 1rem; }
 .panel-cab h2 { margin: 0; font-size: 1.1rem; color: var(--oro); }
 .panel-cuerpo { overflow-y: auto; overscroll-behavior: contain; padding: 0 1rem 1rem; -webkit-overflow-scrolling: touch; }
-.c-item { padding: .6rem 0; border-bottom: 1px solid rgba(227, 177, 74, .2); }
+.c-item { padding: .6rem 0 .6rem .75rem; border-bottom: 1px solid rgba(227, 177, 74, .2); border-left: 4px solid var(--rol, var(--c-otro)); }
 .c-item p { margin: .25rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .c-cab { display: flex; flex-wrap: wrap; gap: .25rem .6rem; font-size: .85rem; }
 .c-cab span, .c-cab time { opacity: .7; }
+.c-cab .rol-pill { opacity: 1; }
 .c-vacio { opacity: .8; text-align: center; }
 .c-aviso { font-size: .85rem; opacity: .85; margin: 1rem 0 .5rem; }
 #form-comentario { display: flex; flex-direction: column; gap: .5rem; }

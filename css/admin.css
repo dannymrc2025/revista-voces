@@ -30,6 +30,10 @@ select option { color: #000; }
 .card { width: 100%; padding: .9rem; background: rgba(255, 255, 255, .04); border: 1.5px solid var(--oro-suave); border-radius: 14px; }
 .card .meta { display: flex; flex-wrap: wrap; gap: .25rem .7rem; font-size: .85rem; opacity: .8; }
 .card .meta strong { color: var(--oro); opacity: 1; }
+.card { border-left: 4px solid var(--rol, var(--c-otro)); }
+.card .meta .rol-pill { opacity: 1; }
+.filtros { display: flex; gap: .5rem; margin-bottom: .75rem; }
+.filtros select { flex: 1; min-width: 0; }
 .card p { margin: .5rem 0 .75rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 .acciones, .conf { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
 .acciones .btn, .conf .btn { flex: 1 1 8rem; }

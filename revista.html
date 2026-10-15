@@ -47,9 +47,14 @@
         <input id="c-nombre" type="text" placeholder="Nombre o alias" aria-label="Nombre o alias" minlength="2" maxlength="40" required>
         <select id="c-rol" aria-label="Rol">
           <option>Alumno</option>
-          <option>Padre o madre de familia</option>
           <option>Docente</option>
-          <option>Otro</option>
+          <option>Padre o madre de familia</option>
+        </select>
+        <select id="c-grupo" aria-label="Grupo">
+          <option value="">Elige tu grupo</option>
+          <optgroup label="1.er grado"><option>1A</option><option>1B</option><option>1C</option><option>1D</option><option>1E</option></optgroup>
+          <optgroup label="2.º grado"><option>2A</option><option>2B</option><option>2C</option><option>2D</option><option>2E</option></optgroup>
+          <optgroup label="3.er grado"><option>3A</option><option>3B</option><option>3C</option><option>3D</option><option>3E</option></optgroup>
         </select>
         <textarea id="c-texto" placeholder="Escribe tu comentario" aria-label="Comentario" minlength="3" maxlength="500" required></textarea>
         <span id="c-contador" class="c-contador">0/500</span>

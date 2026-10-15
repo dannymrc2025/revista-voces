@@ -7,6 +7,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig, ADMIN_UID } from "./firebase-config.js";
 import { iniciarPublicar, detenerPublicar, alternarVisible, eliminarEdicion } from "./publicar.js";
+import { GRUPOS, claseRol, etiquetaRol } from "./roles.js";
 
 const $ = (id) => document.getElementById(id);
 const app = initializeApp(firebaseConfig);
@@ -48,9 +49,9 @@ async function accion(fn) {
 
 // ---------- Tarjetas ----------
 function tarjeta(c, botones) {
-  const card = el("article", "card");
+  const card = el("article", `card ${claseRol(c.rol)}`);
   const meta = el("div", "meta");
-  meta.append(el("strong", "", c.nombre), el("span", "", c.rol), el("span", "", `Edición ${c.edicion}`), el("span", "", fechaHora(c)));
+  meta.append(el("strong", "", c.nombre), etiquetaRol(c), el("span", "", `Edición ${c.edicion}`), el("span", "", fechaHora(c)));
   const acciones = el("div", "acciones");
   card.append(meta, el("p", "", c.texto), acciones);
 
@@ -86,8 +87,12 @@ function pintarPendientes() {
 function pintarPublicados() {
   const lista = $("lista-pub");
   const ed = $("sel-ed").value;
-  const ord = publicados.filter((c) => c.edicion === ed).sort(masNuevo);
-  if (!ord.length) { lista.replaceChildren(el("p", "vacio", "No hay comentarios publicados en esta edición.")); return; }
+  const rol = $("fil-rol").value;
+  const grupo = $("fil-grupo").value;
+  const ord = publicados
+    .filter((c) => c.edicion === ed && (!rol || c.rol === rol) && (!grupo || c.grupo === grupo))
+    .sort(masNuevo);
+  if (!ord.length) { lista.replaceChildren(el("p", "vacio", "No hay comentarios publicados con este filtro.")); return; }
   lista.replaceChildren(...ord.map((c) => tarjeta(c, (confirmar) => [
     boton("Ocultar", "", () => accion(() => updateDoc(doc(db, "comentarios", c.id), { aprobado: false }))),
     boton("Eliminar", "peligro", () => confirmar("¿Eliminar?", () => deleteDoc(doc(db, "comentarios", c.id))))
@@ -189,6 +194,23 @@ function aplicarEdiciones(lista) {
   pintarPublicados();
 }
 $("sel-ed").addEventListener("change", pintarPublicados);
+
+const filGrupo = $("fil-grupo");
+filGrupo.replaceChildren(
+  Object.assign(el("option", "", "Todos los grupos"), { value: "" }),
+  ...Object.entries(GRUPOS).map(([grado, gs]) => {
+    const og = document.createElement("optgroup");
+    og.label = grado;
+    og.append(...gs.map((g) => el("option", "", g)));
+    return og;
+  })
+);
+$("fil-rol").addEventListener("change", () => {
+  filGrupo.hidden = $("fil-rol").value !== "Alumno";
+  if (filGrupo.hidden) filGrupo.value = "";
+  pintarPublicados();
+});
+filGrupo.addEventListener("change", pintarPublicados);
 
 // ---------- Pestañas ----------
 document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => {

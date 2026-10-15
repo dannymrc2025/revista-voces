@@ -1,11 +1,19 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function grupoValido() {
+      let d = request.resource.data;
+      return (d.rol == 'Alumno'
+              && d.keys().hasAll(['grupo'])
+              && d.grupo in ['1A', '1B', '1C', '1D', '1E', '2A', '2B', '2C', '2D', '2E', '3A', '3B', '3C', '3D', '3E'])
+          || (d.rol != 'Alumno' && !d.keys().hasAny(['grupo']));
+    }
+
     match /comentarios/{id} {
       allow read: if resource.data.aprobado == true
                   || (request.auth != null && request.auth.uid == "Tnr5Z6CjmMfsYnVxLjWQbE9uU513");
 
-      allow create: if request.resource.data.keys().hasOnly(['edicion', 'nombre', 'rol', 'texto', 'fecha', 'aprobado'])
+      allow create: if request.resource.data.keys().hasOnly(['edicion', 'nombre', 'rol', 'texto', 'fecha', 'aprobado', 'grupo'])
                     && request.resource.data.keys().hasAll(['edicion', 'nombre', 'rol', 'texto', 'fecha', 'aprobado'])
                     && request.resource.data.edicion is string
                     && request.resource.data.nombre is string
@@ -16,7 +24,8 @@ service cloud.firestore {
                     && request.resource.data.nombre.size() <= 40
                     && request.resource.data.texto.size() >= 3
                     && request.resource.data.texto.size() <= 500
-                    && request.resource.data.rol in ['Alumno', 'Padre o madre de familia', 'Docente', 'Otro'];
+                    && request.resource.data.rol in ['Alumno', 'Padre o madre de familia', 'Docente']
+                    && grupoValido();
 
       allow update, delete: if request.auth != null
                             && request.auth.uid == "Tnr5Z6CjmMfsYnVxLjWQbE9uU513";
