@@ -37,31 +37,46 @@
 
   <section id="panel-comentarios" class="panel-comentarios" aria-hidden="true" aria-label="Comentarios">
     <div class="panel-cab">
-      <h2>Comentarios</h2>
+      <h2 id="c-titulo">Comentarios (0)</h2>
       <button id="c-cerrar" class="btn" type="button">Cerrar</button>
     </div>
     <div class="panel-cuerpo">
       <div id="lista-comentarios"></div>
-      <p class="c-aviso">Tu comentario será revisado antes de publicarse. Usa solo tu nombre o un alias; no compartas datos personales.</p>
-      <form id="form-comentario" autocomplete="off">
-        <input id="c-nombre" type="text" placeholder="Nombre o alias" aria-label="Nombre o alias" minlength="2" maxlength="40" required>
-        <select id="c-rol" aria-label="Rol">
-          <option>Alumno</option>
-          <option>Docente</option>
-          <option>Padre o madre de familia</option>
-        </select>
-        <select id="c-grupo" aria-label="Grupo">
-          <option value="">Elige tu grupo</option>
-          <optgroup label="1.er grado"><option>1A</option><option>1B</option><option>1C</option><option>1D</option><option>1E</option></optgroup>
-          <optgroup label="2.º grado"><option>2A</option><option>2B</option><option>2C</option><option>2D</option><option>2E</option></optgroup>
-          <optgroup label="3.er grado"><option>3A</option><option>3B</option><option>3C</option><option>3D</option><option>3E</option></optgroup>
-        </select>
-        <textarea id="c-texto" placeholder="Escribe tu comentario" aria-label="Comentario" minlength="3" maxlength="500" required></textarea>
-        <span id="c-contador" class="c-contador">0/500</span>
-        <div class="c-trampa" aria-hidden="true"><input id="c-web" type="text" name="web" tabindex="-1" autocomplete="off"></div>
-        <button id="c-enviar" class="btn" type="submit">Enviar</button>
-        <p id="msg-comentario" role="status"></p>
-      </form>
+    </div>
+    <div class="panel-pie">
+      <p id="c-gracias" class="c-gracias" role="status" hidden></p>
+      <button id="c-escribir" class="btn c-escribir" type="button" aria-expanded="false" aria-controls="c-form-wrap">✍️ Escribir un comentario</button>
+      <div id="c-form-wrap" class="c-form-wrap">
+        <form id="form-comentario" autocomplete="off">
+          <div class="c-fila c-fila-1">
+            <input id="c-nombre" type="text" placeholder="Tu nombre" aria-label="Nombre" minlength="2" maxlength="40" required>
+            <label class="c-soy"><span>Soy:</span>
+              <select id="c-rol" aria-label="Soy">
+                <option>Alumno</option>
+                <option>Docente</option>
+                <option>Padre o madre de familia</option>
+              </select>
+            </label>
+          </div>
+          <select id="c-grupo" aria-label="Grupo">
+            <option value="">Elige tu grupo</option>
+            <optgroup label="1.er grado"><option>1A</option><option>1B</option><option>1C</option><option>1D</option><option>1E</option></optgroup>
+            <optgroup label="2.º grado"><option>2A</option><option>2B</option><option>2C</option><option>2D</option><option>2E</option></optgroup>
+            <optgroup label="3.er grado"><option>3A</option><option>3B</option><option>3C</option><option>3D</option><option>3E</option></optgroup>
+          </select>
+          <div class="c-texto-caja">
+            <textarea id="c-texto" rows="3" placeholder="Escribe tu comentario" aria-label="Comentario" minlength="3" maxlength="500" required></textarea>
+            <span id="c-contador" class="c-contador">0/500</span>
+          </div>
+          <div class="c-trampa" aria-hidden="true"><input id="c-web" type="text" name="web" tabindex="-1" autocomplete="off"></div>
+          <div class="c-fila c-botones">
+            <button id="c-enviar" class="btn primario" type="submit">Enviar</button>
+            <button id="c-cancelar" class="btn" type="button">Cancelar</button>
+          </div>
+          <p id="msg-comentario" role="status"></p>
+          <p class="c-aviso">Se revisa antes de publicarse. Usa solo tu nombre de pila.</p>
+        </form>
+      </div>
     </div>
   </section>
 

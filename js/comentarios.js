@@ -41,6 +41,7 @@ if (ed && /^[\w.-]+$/.test(ed)) {
 
   function pintar(items) {
     abrir.textContent = `💬 Comentarios (${items.length})`;
+    $("c-titulo").textContent = `Comentarios (${items.length})`;
     lista.replaceChildren();
     if (!items.length) {
       const p = document.createElement("p");
@@ -89,7 +90,52 @@ if (ed && /^[\w.-]+$/.test(ed)) {
   $("c-cerrar").addEventListener("click", () => abrirPanel(false));
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") abrirPanel(false); });
 
-  texto.addEventListener("input", () => { contador.textContent = `${texto.value.length}/500`; });
+  texto.addEventListener("input", () => { contador.textContent = `${texto.value.length}/500`; autoajustar(); });
+
+  // Crece de 3 a 6 renglones; el CSS fija el máximo.
+  function autoajustar() {
+    texto.style.height = "auto";
+    texto.style.height = `${texto.scrollHeight + texto.offsetHeight - texto.clientHeight}px`;
+  }
+
+  const wrap = $("c-form-wrap");
+  const btnEscribir = $("c-escribir");
+  const gracias = $("c-gracias");
+  let temporizador = null;
+
+  function plegar(v) {
+    wrap.classList.toggle("abierto", v);
+    wrap.inert = !v;
+    btnEscribir.hidden = v;
+    btnEscribir.setAttribute("aria-expanded", String(v));
+  }
+  plegar(false);
+
+  function desplegar() {
+    clearTimeout(temporizador);
+    gracias.hidden = true;
+    msg.textContent = "";
+    plegar(true);
+    autoajustar();
+    $("c-nombre").focus({ preventScroll: true });
+  }
+  btnEscribir.addEventListener("click", desplegar);
+  $("c-cancelar").addEventListener("click", () => { msg.textContent = ""; plegar(false); btnEscribir.focus(); });
+
+  function avisoGracias() {
+    gracias.textContent = "¡Gracias! Tu comentario aparecerá cuando sea aprobado.";
+    gracias.hidden = false;
+    clearTimeout(temporizador);
+    temporizador = setTimeout(() => { gracias.hidden = true; }, 4000);
+  }
+
+  // Con el teclado abierto, mantiene visible el campo activo.
+  const verCampo = () => {
+    const a = document.activeElement;
+    if (a && form.contains(a)) a.scrollIntoView({ block: "center", behavior: "smooth" });
+  };
+  form.addEventListener("focusin", () => setTimeout(verCampo, 300));
+  window.visualViewport?.addEventListener("resize", () => { if (wrap.classList.contains("abierto")) verCampo(); });
 
   const selRol = $("c-rol");
   const selGrupo = $("c-grupo");
@@ -126,7 +172,10 @@ if (ed && /^[\w.-]+$/.test(ed)) {
       form.reset();
       actualizarGrupo();
       contador.textContent = "0/500";
-      msg.textContent = "¡Gracias! Tu comentario aparecerá cuando sea aprobado.";
+      autoajustar();
+      msg.textContent = "";
+      plegar(false);
+      avisoGracias();
     } catch (err) {
       console.error(err);
       msg.textContent = "No se pudo enviar. Inténtalo más tarde.";
