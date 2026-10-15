@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Voces del Corazón Maya</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="visor">
+  <header class="barra">
+    <a href="index.html" class="volver">← Ediciones</a>
+    <span id="titulo"></span>
+  </header>
+
+  <div class="barra-comentarios">
+    <button id="btn-comentarios" class="btn" type="button" aria-expanded="false" aria-controls="panel-comentarios">💬 Comentarios (0)</button>
+  </div>
+
+  <main id="area" class="area">
+    <div id="libro" class="libro" aria-live="polite"></div>
+  </main>
+
+  <nav class="controles" aria-label="Controles de la revista">
+    <button id="prev" class="btn" aria-label="Página anterior">‹</button>
+    <span id="contador" class="contador" aria-live="polite"></span>
+    <button id="next" class="btn" aria-label="Página siguiente">›</button>
+    <button id="compartir" class="btn">Compartir</button>
+  </nav>
+
+  <div id="overlay" class="overlay" hidden>
+    <button id="cerrar" class="btn cerrar">Cerrar</button>
+    <div class="overlay-scroll"><img id="overlay-img" alt=""></div>
+  </div>
+
+  <section id="panel-comentarios" class="panel-comentarios" aria-hidden="true" aria-label="Comentarios">
+    <div class="panel-cab">
+      <h2>Comentarios</h2>
+      <button id="c-cerrar" class="btn" type="button">Cerrar</button>
+    </div>
+    <div class="panel-cuerpo">
+      <div id="lista-comentarios"></div>
+      <p class="c-aviso">Tu comentario será revisado antes de publicarse. Usa solo tu nombre o un alias; no compartas datos personales.</p>
+      <form id="form-comentario" autocomplete="off">
+        <input id="c-nombre" type="text" placeholder="Nombre o alias" aria-label="Nombre o alias" minlength="2" maxlength="40" required>
+        <select id="c-rol" aria-label="Rol">
+          <option>Alumno</option>
+          <option>Padre o madre de familia</option>
+          <option>Docente</option>
+          <option>Otro</option>
+        </select>
+        <textarea id="c-texto" placeholder="Escribe tu comentario" aria-label="Comentario" minlength="3" maxlength="500" required></textarea>
+        <span id="c-contador" class="c-contador">0/500</span>
+        <div class="c-trampa" aria-hidden="true"><input id="c-web" type="text" name="web" tabindex="-1" autocomplete="off"></div>
+        <button id="c-enviar" class="btn" type="submit">Enviar</button>
+        <p id="msg-comentario" role="status"></p>
+      </form>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+  <script src="js/revista.js"></script>
+  <script type="module" src="js/comentarios.js"></script>
+</body>
+</html>

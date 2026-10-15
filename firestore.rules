@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /comentarios/{id} {
+      allow read: if resource.data.aprobado == true
+                  || (request.auth != null && request.auth.uid == "Tnr5Z6CjmMfsYnVxLjWQbE9uU513");
+
+      allow create: if request.resource.data.keys().hasOnly(['edicion', 'nombre', 'rol', 'texto', 'fecha', 'aprobado'])
+                    && request.resource.data.keys().hasAll(['edicion', 'nombre', 'rol', 'texto', 'fecha', 'aprobado'])
+                    && request.resource.data.edicion is string
+                    && request.resource.data.nombre is string
+                    && request.resource.data.texto is string
+                    && request.resource.data.aprobado == false
+                    && request.resource.data.fecha == request.time
+                    && request.resource.data.nombre.size() >= 2
+                    && request.resource.data.nombre.size() <= 40
+                    && request.resource.data.texto.size() >= 3
+                    && request.resource.data.texto.size() <= 500
+                    && request.resource.data.rol in ['Alumno', 'Padre o madre de familia', 'Docente', 'Otro'];
+
+      allow update, delete: if request.auth != null
+                            && request.auth.uid == "Tnr5Z6CjmMfsYnVxLjWQbE9uU513";
+    }
+  }
+}
