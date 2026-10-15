@@ -163,7 +163,7 @@ function etiquetasOg(url0, id, titulo, fecha) {
   ].join("\n");
 }
 
-function paginaEntrada(url0, id, titulo, fecha) {
+function paginaEntrada(url0, id, titulo, fecha, ext = "webp") {
   const visor = `../../revista.html?ed=${id}`;
   return `<!DOCTYPE html>
 <html lang="es">
@@ -179,7 +179,7 @@ ${etiquetasOg(url0, id, titulo, fecha)}
   <main class="contenedor entrada">
     <h1>${q(titulo)}</h1>
     <p>${q(fecha)}</p>
-    <img src="paginas/p001-m.webp" alt="Portada de ${q(titulo)}" width="400">
+    <img src="paginas/p001-m.${ext}" alt="Portada de ${q(titulo)}" width="400">
     <p><a class="boton" href="${q(visor)}">Leer la revista</a></p>
   </main>
 </body>
@@ -227,12 +227,16 @@ function lienzo(w, h) {
   return c;
 }
 
-async function blobWebp(canvas, calidad) {
-  const b = await aBlob(canvas, "image/webp", calidad);
-  if (!b || b.type !== "image/webp") {
-    throw new ErrorGH("Este navegador no puede generar WebP. Abre el panel en Google Chrome para subir ediciones.", 0);
-  }
-  return b;
+async function soportaWebp() {
+  const c = lienzo(1, 1);
+  const b = await aBlob(c, "image/webp", 0.8);
+  liberar(c);
+  return !!b && b.type === "image/webp";
+}
+
+function liberar(c) {
+  c.width = 0;
+  c.height = 0;
 }
 
 async function crearOg(canvasPortada) {
@@ -248,7 +252,7 @@ async function crearOg(canvasPortada) {
   let calidad = 80;
   for (;;) {
     const b = await aBlob(c, "image/jpeg", calidad / 100);
-    if (b.size < OG_MAX_BYTES || calidad <= 40) return b;
+    if (b.size < OG_MAX_BYTES || calidad <= 40) { liberar(c); return b; }
     calidad -= 5;
   }
 }
@@ -256,6 +260,10 @@ async function crearOg(canvasPortada) {
 async function convertir(file, { id, titulo, fecha }, progreso) {
   const lib = await cargarPdfjs();
   const pdf = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+  const webp = await soportaWebp();
+  const ext = webp ? "webp" : "jpg";
+  const tipo = webp ? "image/webp" : "image/jpeg";
+  const [calHd, calM] = webp ? [0.80, 0.75] : [0.82, 0.78];
   const total = pdf.numPages;
   const archivos = [];
   const miniaturas = [];
@@ -281,29 +289,32 @@ async function convertir(file, { id, titulo, fecha }, progreso) {
     pagina.cleanup();
 
     const n = `p${String(i).padStart(3, "0")}`;
-    const bHd = await blobWebp(hd, 0.80);
+    const bHd = await aBlob(hd, tipo, calHd);
     const m = lienzo(ANCHO_M, Math.round((hd.height * ANCHO_M) / hd.width));
     const mctx = m.getContext("2d");
     mctx.imageSmoothingQuality = "high";
     mctx.drawImage(hd, 0, 0, m.width, m.height);
-    const bM = await blobWebp(m, 0.75);
+    const bM = await aBlob(m, tipo, calM);
+    if (!bHd || !bM) throw new Error("No se pudo generar la imagen de la página.");
 
-    archivos.push({ path: `${base}/paginas/${n}-hd.webp`, blob: bHd }, { path: `${base}/paginas/${n}-m.webp`, blob: bM });
+    archivos.push({ path: `${base}/paginas/${n}-hd.${ext}`, blob: bHd }, { path: `${base}/paginas/${n}-m.${ext}`, blob: bM });
     miniaturas.push(URL.createObjectURL(bM));
     if (i === 1) og = await crearOg(hd);
+    liberar(hd);
+    liberar(m);
   }
   await pdf.destroy();
 
   const url0 = await cargarSiteUrl();
   archivos.push({ path: `${base}/portada-og.jpg`, blob: og });
-  const info = { titulo, fecha, paginas: total, ancho, alto };
+  const info = { titulo, fecha, paginas: total, ancho, alto, ext };
   const textos = [
     { path: `${base}/info.json`, text: json(info) },
-    { path: `${base}/index.html`, text: paginaEntrada(url0, id, titulo, fecha) }
+    { path: `${base}/index.html`, text: paginaEntrada(url0, id, titulo, fecha, ext) }
   ];
   const peso = archivos.reduce((s, a) => s + a.blob.size, 0)
     + textos.reduce((s, a) => s + new Blob([a.text]).size, 0);
-  return { id, titulo, fecha, paginas: total, archivos, textos, miniaturas, peso };
+  return { id, titulo, fecha, paginas: total, ext, archivos, textos, miniaturas, peso };
 }
 
 // ---------- Interfaz: configuración del token ----------
@@ -402,7 +413,7 @@ async function iniciarConversion(datos) {
     limpiarNueva();
     nueva = await convertir(datos.file, datos, (i, t) => progreso(`Convirtiendo página ${i} de ${t}…`, i - 1, t));
     const mb = (nueva.peso / (1024 * 1024)).toFixed(2);
-    $("ne-prev-info").textContent = `${nueva.titulo} · ${nueva.fecha} · ${nueva.paginas} páginas · ${mb} MB en total`;
+    $("ne-prev-info").textContent = `${nueva.titulo} · ${nueva.fecha} · ${nueva.paginas} páginas · ${mb} MB en total${nueva.ext === "jpg" ? " · Formato JPG (compatible con este navegador)" : ""}`;
     $("ne-miniaturas").replaceChildren(...nueva.miniaturas.map((u, i) => {
       const img = document.createElement("img");
       img.src = u;
@@ -446,6 +457,7 @@ async function publicar() {
       construir: async ({ leer, arbol }) => {
         const lista = JSON.parse((await leer("ediciones/ediciones.json")) || "[]");
         const entrada = { id: ed.id, titulo: ed.titulo, fecha: ed.fecha, paginas: ed.paginas };
+        if (ed.ext !== "webp") entrada.ext = ed.ext; // las listas leen la portada con este formato
         const pos = lista.findIndex((e) => e.id === ed.id);
         let borrar = [];
         if (pos >= 0) {

@@ -22,7 +22,7 @@
   const total = info.paginas;
   const ratio = info.ancho / info.alto;
   const base = `ediciones/${ed}/paginas/`;
-  const src = (i, v) => `${base}p${String(i + 1).padStart(3, '0')}-${v}.webp`;
+  const src = (i, v) => `${base}p${String(i + 1).padStart(3, '0')}-${v}.${info.ext || 'webp'}`;
   const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   document.title = `${info.titulo} – Voces del Corazón Maya`;

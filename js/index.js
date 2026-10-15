@@ -14,7 +14,7 @@
       a.href = `revista.html?ed=${encodeURIComponent(e.id)}`;
 
       const img = document.createElement('img');
-      img.src = `ediciones/${e.id}/paginas/p001-m.webp`;
+      img.src = `ediciones/${e.id}/paginas/p001-m.${e.ext || 'webp'}`;
       img.alt = `Portada de ${e.titulo}`;
       img.loading = 'lazy';
 

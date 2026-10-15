@@ -100,7 +100,7 @@ function pintarEdiciones() {
     const n = publicados.filter((c) => c.edicion === e.id).length;
     const fila = el("div", "ed");
     const img = el("img");
-    img.src = `ediciones/${encodeURIComponent(e.id)}/paginas/p001-m.webp`;
+    img.src = `ediciones/${encodeURIComponent(e.id)}/paginas/p001-m.${e.ext || "webp"}`;
     img.alt = `Portada de ${e.titulo}`;
     img.loading = "lazy";
     const info = el("div");
