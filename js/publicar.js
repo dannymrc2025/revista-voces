@@ -2,7 +2,6 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.1/
 
 const REPO = "dannymrc2025/revista-voces";
 const RAMA = "main";
-const PDFJS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/";
 const ANCHO_RENDER = 1800;
 const ANCHO_M = 1000;
 const OG_W = 1200;
@@ -210,8 +209,8 @@ async function archivosIndex(leer, lista) {
 let pdfjs = null;
 async function cargarPdfjs() {
   if (!pdfjs) {
-    pdfjs = await import(`${PDFJS}pdf.min.mjs`);
-    pdfjs.GlobalWorkerOptions.workerSrc = `${PDFJS}pdf.worker.min.mjs`;
+    pdfjs = await import("./vendor/pdfjs/pdf.min.mjs");
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL("./vendor/pdfjs/pdf.worker.min.mjs", import.meta.url).href;
   }
   return pdfjs;
 }
@@ -252,14 +251,60 @@ async function crearOg(canvasPortada) {
   let calidad = 80;
   for (;;) {
     const b = await aBlob(c, "image/jpeg", calidad / 100);
+    if (!b) { liberar(c); throw new Error("El navegador no pudo generar la imagen JPG de portada"); }
     if (b.size < OG_MAX_BYTES || calidad <= 40) { liberar(c); return b; }
     calidad -= 5;
   }
 }
 
+// Renderiza una página; si el canvas es demasiado grande para el navegador, baja el ancho (máx. 1800).
+async function renderPagina(pagina, v1, { tipo, calHd, calM, conOg }) {
+  let ultimo;
+  for (const anchoHd of [ANCHO_RENDER, 1500, 1200, 900]) {
+    const hd = lienzo(anchoHd, Math.round((v1.height * anchoHd) / v1.width));
+    let m = null;
+    try {
+      const ctx = hd.getContext("2d");
+      if (!ctx) throw new Error(`Canvas de ${hd.width}x${hd.height} no disponible`);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, hd.width, hd.height);
+      const viewport = pagina.getViewport({ scale: anchoHd / v1.width });
+      await pagina.render({ canvasContext: ctx, viewport }).promise;
+      const bHd = await aBlob(hd, tipo, calHd);
+      if (!bHd) throw new Error(`toBlob devolvió null (${hd.width}x${hd.height})`);
+      m = lienzo(Math.min(ANCHO_M, anchoHd), Math.round((hd.height * Math.min(ANCHO_M, anchoHd)) / hd.width));
+      const mctx = m.getContext("2d");
+      if (!mctx) throw new Error("Canvas reducido no disponible");
+      mctx.imageSmoothingQuality = "high";
+      mctx.drawImage(hd, 0, 0, m.width, m.height);
+      const bM = await aBlob(m, tipo, calM);
+      if (!bM) throw new Error("toBlob devolvió null (versión reducida)");
+      return { bHd, bM, og: conOg ? await crearOg(hd) : null };
+    } catch (e) {
+      ultimo = e;
+    } finally {
+      liberar(hd);
+      if (m) liberar(m);
+      pagina.cleanup();
+    }
+  }
+  throw ultimo;
+}
+
 async function convertir(file, { id, titulo, fecha }, progreso) {
+  let fase = "al abrir el PDF";
+  try {
+    return await convertirPdf(file, { id, titulo, fecha }, progreso, (f) => { fase = f; });
+  } catch (e) {
+    e.fase = fase;
+    throw e;
+  }
+}
+
+async function convertirPdf(file, { id, titulo, fecha }, progreso, marcar) {
   const lib = await cargarPdfjs();
-  const pdf = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+  const buffer = await file.arrayBuffer();
+  const pdf = await lib.getDocument({ data: new Uint8Array(buffer) }).promise;
   const webp = await soportaWebp();
   const ext = webp ? "webp" : "jpg";
   const tipo = webp ? "image/webp" : "image/jpeg";
@@ -274,35 +319,21 @@ async function convertir(file, { id, titulo, fecha }, progreso) {
 
   for (let i = 1; i <= total; i++) {
     progreso(i, total);
+    marcar(`en la página ${i} de ${total}`);
     const pagina = await pdf.getPage(i);
     const v1 = pagina.getViewport({ scale: 1 });
     if (i === 1) {
       ancho = Math.round(v1.width * 100) / 100;
       alto = Math.round(v1.height * 100) / 100;
     }
-    const viewport = pagina.getViewport({ scale: ANCHO_RENDER / v1.width });
-    const hd = lienzo(ANCHO_RENDER, Math.round(viewport.height));
-    const ctx = hd.getContext("2d");
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, hd.width, hd.height);
-    await pagina.render({ canvasContext: ctx, viewport }).promise;
-    pagina.cleanup();
+    const { bHd, bM, og: ogPagina } = await renderPagina(pagina, v1, { tipo, calHd, calM, conOg: i === 1 });
+    if (i === 1) og = ogPagina;
 
     const n = `p${String(i).padStart(3, "0")}`;
-    const bHd = await aBlob(hd, tipo, calHd);
-    const m = lienzo(ANCHO_M, Math.round((hd.height * ANCHO_M) / hd.width));
-    const mctx = m.getContext("2d");
-    mctx.imageSmoothingQuality = "high";
-    mctx.drawImage(hd, 0, 0, m.width, m.height);
-    const bM = await aBlob(m, tipo, calM);
-    if (!bHd || !bM) throw new Error("No se pudo generar la imagen de la página.");
-
     archivos.push({ path: `${base}/paginas/${n}-hd.${ext}`, blob: bHd }, { path: `${base}/paginas/${n}-m.${ext}`, blob: bM });
     miniaturas.push(URL.createObjectURL(bM));
-    if (i === 1) og = await crearOg(hd);
-    liberar(hd);
-    liberar(m);
   }
+  marcar("al cerrar el PDF");
   await pdf.destroy();
 
   const url0 = await cargarSiteUrl();
@@ -408,6 +439,7 @@ function datosForm() {
 
 async function iniciarConversion(datos) {
   $("ne-conf").hidden = true;
+  $("ne-detalle").textContent = "";
   mostrar("convirtiendo");
   try {
     limpiarNueva();
@@ -424,9 +456,10 @@ async function iniciarConversion(datos) {
     $("ne-publicar").disabled = false;
     mostrar("previa");
   } catch (e) {
-    console.error(e.message);
+    console.error(`Conversión fallida ${e.fase}:`, e);
     mostrar("form");
     nota("ne-msg", e instanceof ErrorGH ? e.message : "No se pudo convertir el PDF. Verifica que el archivo sea válido.", true);
+    $("ne-detalle").textContent = `${e.name}: ${e.message} (${e.fase || "fase desconocida"})`;
   }
 }
 

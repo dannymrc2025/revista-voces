@@ -51,6 +51,7 @@ select option { color: #000; }
 .estado { flex: 1 1 100%; font-weight: 700; color: var(--oro); }
 .nota { margin: 0; min-height: 1.2em; overflow-wrap: anywhere; }
 .nota.error { color: #ffb4a6; }
+.detalle { margin: 0; font-size: .75rem; opacity: .7; overflow-wrap: anywhere; }
 .drop { display: block; padding: 1.5rem 1rem; text-align: center; cursor: pointer; border: 2px dashed var(--oro-suave); border-radius: 12px; overflow-wrap: anywhere; }
 .drop.sobre { background: rgba(227, 177, 74, .12); border-color: var(--oro); }
 progress { width: 100%; height: 1rem; accent-color: var(--jade); }
