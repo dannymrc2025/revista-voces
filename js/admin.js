@@ -6,6 +6,7 @@ import {
   getFirestore, collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig, ADMIN_UID } from "./firebase-config.js";
+import { iniciarPublicar, detenerPublicar, alternarVisible, eliminarEdicion } from "./publicar.js";
 
 const $ = (id) => document.getElementById(id);
 const app = initializeApp(firebaseConfig);
@@ -104,7 +105,27 @@ function pintarEdiciones() {
     img.loading = "lazy";
     const info = el("div");
     info.append(el("strong", "", e.titulo), el("span", "", e.fecha || ""), el("span", "", `${n} ${n === 1 ? "comentario aprobado" : "comentarios aprobados"}`));
-    fila.append(img, info);
+    const oculta = e.visible === false;
+    if (oculta) { info.append(el("span", "etiqueta", "Oculta")); fila.classList.add("oculta"); }
+
+    const acc = el("div", "acciones conf");
+    const normal = () => acc.replaceChildren(
+      boton(oculta ? "Mostrar" : "Ocultar", "", () => operar(() => alternarVisible(e.id))),
+      boton("Eliminar", "peligro", confirmar)
+    );
+    const confirmar = () => acc.replaceChildren(
+      el("span", "", `¿Eliminar "${e.titulo}"? Se borran sus páginas; los comentarios se conservan.`),
+      boton("Sí, eliminar", "peligro", () => operar(() => eliminarEdicion(e.id))),
+      boton("No", "", normal)
+    );
+    async function operar(fn) {
+      acc.replaceChildren(el("span", "", "Publicando cambio…"));
+      try { await fn(); } catch (err) {
+        acc.replaceChildren(el("span", "", err.message || "No se pudo completar la acción."), boton("Cerrar", "", normal));
+      }
+    }
+    normal();
+    fila.append(img, info, acc);
     return fila;
   }));
 }
@@ -146,16 +167,24 @@ function detener() {
 }
 
 async function cargarEdiciones() {
+  let lista;
   try {
-    const res = await fetch("ediciones/ediciones.json");
-    ediciones = await res.json();
-  } catch { ediciones = []; }
+    const res = await fetch("ediciones/ediciones.json", { cache: "no-store" });
+    lista = await res.json();
+  } catch { lista = []; }
+  aplicarEdiciones(lista);
+}
+
+function aplicarEdiciones(lista) {
+  ediciones = lista;
   const sel = $("sel-ed");
+  const actual = sel.value;
   sel.replaceChildren(...ediciones.map((e) => {
     const o = el("option", "", e.titulo);
     o.value = e.id;
     return o;
   }));
+  if (ediciones.some((e) => e.id === actual)) sel.value = actual;
   pintarEdiciones();
   pintarPublicados();
 }
@@ -205,9 +234,11 @@ onAuthStateChanged(auth, async (user) => {
   $("login").hidden = dentro;
   $("panel").hidden = !dentro;
   detener();
+  detenerPublicar();
   if (dentro) {
     $("form-login").reset();
     await cargarEdiciones();
+    iniciarPublicar({ db, getEdiciones: () => ediciones, onCambio: aplicarEdiciones });
     escuchar();
   }
 });

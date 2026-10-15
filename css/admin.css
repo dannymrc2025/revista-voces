@@ -41,6 +41,22 @@ select option { color: #000; }
 .ed img { width: 64px; height: auto; border-radius: 6px; background: var(--papel); flex: none; }
 .ed strong { font-family: var(--titulos); }
 .ed div { min-width: 0; display: flex; flex-direction: column; gap: .2rem; }
+.ed { flex-wrap: wrap; }
+.ed > .acciones { flex: 1 1 100%; flex-direction: row; }
+.ed.oculta img { opacity: .45; }
+.etiqueta { align-self: flex-start; font: 700 .75rem var(--cuerpo); padding: .1rem .5rem; border-radius: 999px; border: 1px solid var(--oro-suave); color: var(--oro); }
+
+.sec { margin-bottom: .5rem; }
+.campos { display: flex; flex-direction: column; gap: .75rem; }
+.estado { flex: 1 1 100%; font-weight: 700; color: var(--oro); }
+.nota { margin: 0; min-height: 1.2em; overflow-wrap: anywhere; }
+.nota.error { color: #ffb4a6; }
+.drop { display: block; padding: 1.5rem 1rem; text-align: center; cursor: pointer; border: 2px dashed var(--oro-suave); border-radius: 12px; overflow-wrap: anywhere; }
+.drop.sobre { background: rgba(227, 177, 74, .12); border-color: var(--oro); }
+progress { width: 100%; height: 1rem; accent-color: var(--jade); }
+.miniaturas { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: .5rem; max-height: 22rem; overflow-y: auto; }
+.miniaturas img { width: 100%; height: auto; border-radius: 4px; background: var(--papel); }
+#ne-enlace { overflow-wrap: anywhere; }
 
 .volver-sitio { display: block; padding: calc(.6rem + env(safe-area-inset-top)) 1rem .2rem; text-decoration: none; font-size: .9rem; }
 .login { min-height: calc(100dvh - 3rem); }

@@ -58,7 +58,65 @@
       </section>
 
       <section id="tab-ediciones" hidden>
-        <p class="aviso">La subida de ediciones desde el panel se activará después de publicar en GitHub</p>
+        <div class="fila-titulo"><h2>Conexión con GitHub</h2></div>
+        <div class="card sec">
+          <form id="gh-form" class="campos" autocomplete="off">
+            <input id="gh-token" type="password" placeholder="github_pat_…" aria-label="Token de GitHub" autocomplete="off" required>
+            <button class="btn primario" type="submit">Guardar token</button>
+          </form>
+          <div id="gh-guardado" class="acciones" hidden>
+            <span id="gh-estado" class="estado"></span>
+            <button id="gh-probar" class="btn" type="button">Probar conexión</button>
+            <button id="gh-reemplazar" class="btn" type="button">Reemplazar token</button>
+          </div>
+          <p id="gh-msg" class="nota" role="status"></p>
+        </div>
+
+        <div class="fila-titulo"><h2>Nueva edición</h2></div>
+        <div class="card sec">
+          <div id="ne-form" class="campos">
+            <label id="ne-drop" class="drop">
+              <input id="ne-file" type="file" accept="application/pdf,.pdf" hidden>
+              <span id="ne-nombre-archivo">Arrastra el PDF aquí o toca para elegirlo</span>
+            </label>
+            <input id="ne-id" type="text" placeholder="ID: 2026-11 o 2026-12-especial" aria-label="ID de edición" autocapitalize="off" autocomplete="off">
+            <input id="ne-titulo" type="text" placeholder="Título: Revista Escolar #2" aria-label="Título" autocomplete="off">
+            <input id="ne-fecha" type="text" placeholder="Fecha: Noviembre 2026" aria-label="Fecha" autocomplete="off">
+            <div id="ne-conf" class="conf" hidden>
+              <span>Esta edición ya existe. ¿Reemplazarla?</span>
+              <button id="ne-conf-si" class="btn peligro" type="button">Sí, reemplazar</button>
+              <button id="ne-conf-no" class="btn" type="button">No</button>
+            </div>
+            <button id="ne-convertir" class="btn primario" type="button">Convertir PDF</button>
+            <p id="ne-msg" class="nota" role="status"></p>
+          </div>
+
+          <div id="ne-prog" class="campos" hidden>
+            <span id="ne-prog-txt"></span>
+            <progress id="ne-prog-bar" value="0" max="1"></progress>
+          </div>
+
+          <div id="ne-prev" class="campos" hidden>
+            <span id="ne-prev-info"></span>
+            <div id="ne-miniaturas" class="miniaturas"></div>
+            <div class="acciones">
+              <button id="ne-publicar" class="btn primario" type="button">Publicar edición</button>
+              <button id="ne-cancelar" class="btn" type="button">Cancelar</button>
+            </div>
+            <p id="ne-pub-msg" class="nota" role="status"></p>
+          </div>
+
+          <div id="ne-fin" class="campos" hidden>
+            <strong>Publicada. Estará visible en 1 a 2 minutos</strong>
+            <a id="ne-enlace" target="_blank" rel="noopener"></a>
+            <div class="acciones">
+              <button id="ne-copiar" class="btn primario" type="button">Copiar enlace para WhatsApp</button>
+              <button id="ne-otra" class="btn" type="button">Subir otra edición</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="fila-titulo"><h2>Ediciones publicadas</h2></div>
         <div id="lista-ed" class="lista-ed"></div>
       </section>
     </main>

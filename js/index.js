@@ -8,7 +8,7 @@
       lista.textContent = 'Aún no hay ediciones publicadas.';
       return;
     }
-    for (const e of ediciones) {
+    for (const e of ediciones.filter((x) => x.visible !== false)) {
       const a = document.createElement('a');
       a.className = 'tarjeta';
       a.href = `revista.html?ed=${encodeURIComponent(e.id)}`;
