@@ -1,4 +1,10 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { firebaseConfig, ADMIN_UID } from "./firebase-config.js";
+
 const HTML2PDF = "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js";
+const CHART = "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/+esm";
 const C = {
   papel: "#FBF7EF", texto: "#2B2B2B", bosque: "#0D3B2B", verde: "#1B5E20", claro: "#4CAF50",
   tierra: "#6D4C41", tierraClara: "#D4A574", oro: "#E3B14A", gris: "#D9D4C7"
@@ -8,62 +14,41 @@ const DISP = [["movil", "Celular", "#4CAF50"], ["tablet", "Tableta", "#D4A574"],
 const GRUPOS = ["1A", "1B", "1C", "1D", "1E", "2A", "2B", "2C", "2D", "2E", "3A", "3B", "3C", "3D", "3E"];
 const FONT = { family: "'Nunito Sans', sans-serif" };
 
-const CSS = `
-.rp { width: 816px; font-family: 'Nunito Sans', sans-serif; color: ${C.texto}; background: ${C.papel}; }
-.rp * { box-sizing: border-box; }
-.rp-pag { position: relative; width: 816px; height: 1056px; overflow: hidden; background: ${C.papel}; }
-.rp-pag2 { height: 1055px; }
-.rp h1, .rp h2 { font-family: 'Cinzel', Georgia, serif; margin: 0; }
-.rp-greca { display: block; width: 816px; height: 16px; }
-.rp-cab { background: ${C.bosque}; color: #fff; display: flex; gap: 24px; align-items: center; padding: 24px 40px; }
-.rp-cab img { width: 110px; height: auto; border-radius: 4px; border: 3px solid ${C.oro}; background: #fff; flex: none; }
-.rp-cab h1 { font-size: 28px; line-height: 1.15; color: ${C.oro}; }
-.rp-cab p { margin: 5px 0 0; font-size: 13px; opacity: .92; }
-.rp-cuerpo { padding: 22px 40px 0; }
-.rp-tarjetas { display: flex; gap: 12px; }
-.rp-t { flex: 1; border-radius: 12px; padding: 14px 12px; text-align: center; color: #fff; }
-.rp-t strong { display: block; font-family: 'Cinzel', Georgia, serif; font-size: 34px; line-height: 1.1; }
-.rp-t span { font-size: 12px; font-weight: 700; }
-.rp h2 { font-size: 16px; color: ${C.verde}; margin: 0 0 8px; }
-.rp-sec { margin-top: 20px; }
-.rp-nota { font-size: 11px; color: ${C.tierra}; margin: 6px 0 0; }
-.rp-frase { margin-top: 18px; padding: 14px 16px; border-left: 5px solid ${C.oro}; background: #fff; border-radius: 8px; font-size: 15px; }
-.rp-vacio { padding: 14px; border: 1.5px dashed ${C.tierraClara}; border-radius: 10px; text-align: center; font-size: 13px; color: ${C.tierra}; }
-.rp-fila { display: flex; align-items: center; gap: 10px; height: 22px; font-size: 12px; }
-.rp-fila .n { width: 230px; flex: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rp-fila .b { flex: 1; height: 12px; background: #EFE8D8; border-radius: 6px; overflow: hidden; }
-.rp-fila .b div { height: 100%; border-radius: 6px; }
-.rp-fila .v { width: 28px; text-align: right; font-weight: 700; flex: none; }
-.rp-dos { display: flex; gap: 24px; }
-.rp-dos > div { flex: 1; min-width: 0; }
-.rp-dona { display: flex; align-items: center; gap: 12px; }
-.rp-leyenda { font-size: 12px; display: flex; flex-direction: column; gap: 5px; }
-.rp-leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
-.rp-grupos { display: flex; align-items: flex-end; gap: 6px; height: 100px; }
-.rp-g { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; font-size: 10px; }
-.rp-g div { width: 100%; border-radius: 3px 3px 0 0; }
-.rp-g b { font-size: 10px; margin-bottom: 2px; }
-.rp-com { margin-bottom: 8px; padding: 9px 12px; background: #fff; border-radius: 8px; border-left: 5px solid ${C.gris}; font-size: 12px; }
-.rp-com p { margin: 0 0 4px; font-style: italic; overflow-wrap: anywhere; }
-.rp-com small { font-size: 11px; color: ${C.tierra}; font-weight: 700; }
-.rp-pie { position: absolute; left: 0; right: 0; bottom: 0; }
-.rp-pie div { display: flex; justify-content: space-between; padding: 6px 40px 8px; font-size: 10px; color: ${C.tierra}; }
-`;
+const $ = (id) => document.getElementById(id);
+const ed = new URLSearchParams(location.search).get("ed");
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-// Greca escalonada sencilla; el SVG es un literal fijo, sin datos del usuario.
-const GRECA = (color, fondo) => `<svg class="rp-greca" viewBox="0 0 816 16" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="g${color.slice(1)}" width="32" height="16" patternUnits="userSpaceOnUse"><path d="M0 14V8h8V2h16v6h8v6" fill="none" stroke="${color}" stroke-width="2.5"/></pattern></defs><rect width="816" height="16" fill="${fondo}"/><rect width="816" height="16" fill="url(#g${color.slice(1)})"/></svg>`;
+let edicion = null;
+let reales = null;
+let Chart = null;
+let charts = [];
+let pend = [];
+let idGreca = 0;
 
+// ---------- Utilidades ----------
 function h(tag, cls, texto) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
   if (texto !== undefined) e.textContent = texto;
   return e;
 }
-
+const dia0 = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const masDias = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const clave = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 const fmtFecha = (d) => d.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
 const fmtCorta = (d) => d.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
-const clave = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+const msg = (t) => { $("msg").textContent = t; };
+
+// Greca escalonada sencilla; el SVG es un literal fijo, sin datos del usuario.
+function greca(color, fondo) {
+  const id = `gr${++idGreca}`;
+  const d = h("div", "franja");
+  d.innerHTML = `<svg class="greca" viewBox="0 0 816 14" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="${id}" width="28" height="14" patternUnits="userSpaceOnUse"><path d="M0 12V7h7V2h14v5h7v5" fill="none" stroke="${color}" stroke-width="2"/></pattern></defs><rect width="816" height="14" fill="${fondo}"/><rect width="816" height="14" fill="url(#${id})"/></svg>`;
+  return d;
+}
 
 function cargarScript(url) {
   return new Promise((ok, fallo) => {
@@ -75,15 +60,90 @@ function cargarScript(url) {
   });
 }
 
-function cargarImagen(img, url) {
-  return new Promise((ok) => { img.onload = ok; img.onerror = ok; img.src = url; });
+const esperarFrames = () => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)));
+
+// ---------- Datos ----------
+const aFecha = (v) => (v?.toDate ? v.toDate() : null);
+
+async function cargarReales() {
+  const [v, c] = await Promise.all([
+    getDocs(query(collection(db, "visitas"), where("edicion", "==", ed))),
+    getDocs(query(collection(db, "comentarios"), where("edicion", "==", ed), where("aprobado", "==", true)))
+  ]);
+  return {
+    visitas: v.docs.map((d) => ({ ...d.data(), fecha: aFecha(d.data().fecha) })),
+    comentarios: c.docs.map((d) => ({ ...d.data(), fecha: aFecha(d.data().fecha) }))
+  };
 }
 
-function vacio(texto) { return h("div", "rp-vacio", texto); }
+function datosEjemplo() {
+  let s = 7;
+  const azar = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+  const hoy = dia0(new Date());
+  const porDia = [4, 6, 15, 30, 21, 13, 8, 6, 5, 7, 11, 9, 8, 7];
+  const lugares = [
+    ["Cancún", "Quintana Roo", 30], ["Playa del Carmen", "Quintana Roo", 20], ["Chetumal", "Quintana Roo", 16],
+    ["Cozumel", "Quintana Roo", 10], ["Tulum", "Quintana Roo", 8], ["Mérida", "Yucatán", 9], ["Valladolid", "Yucatán", 4], ["Progreso", "Yucatán", 3]
+  ];
+  const pesoTotal = lugares.reduce((a, l) => a + l[2], 0);
+  const elegirLugar = () => { let r = azar() * pesoTotal; for (const l of lugares) { r -= l[2]; if (r <= 0) return l; } return lugares[0]; };
+  const visitas = [];
+  porDia.forEach((n, i) => {
+    for (let k = 0; k < n; k++) {
+      const l = elegirLugar();
+      const r = azar();
+      visitas.push({
+        fecha: new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - (13 - i), 8 + Math.floor(azar() * 14), Math.floor(azar() * 60)),
+        ciudad: l[0], region: l[1], pais: "México",
+        dispositivo: r < 0.85 ? "movil" : r < 0.92 ? "tablet" : "escritorio"
+      });
+    }
+  });
+  const base = [
+    ["Alumno", "1A", "Valeria", "Me encantó la portada, los dibujos están muy bonitos."],
+    ["Alumno", "1C", "Mateo", "El poema de la página 5 me hizo pensar en mi abuela."],
+    ["Alumno", "2B", "Camila", "Qué orgullo ver el trabajo de mi grupo publicado."],
+    ["Alumno", "2B", "Diego", "Las fotos del taller de cerámica quedaron geniales."],
+    ["Alumno", "2C", "Ximena", "Aprendí palabras nuevas en maya gracias a la sección cultural."],
+    ["Alumno", "3A", "Santiago", "Muy buena entrevista al director, quiero leer más."],
+    ["Alumno", "3A", "Regina", "Mi cuento favorito fue el de la ceiba."],
+    ["Alumno", "3D", "Emiliano", "Felicidades a todo el equipo editorial."],
+    ["Alumno", "3E", "Fernanda", "Me gustaría participar en la próxima edición."],
+    ["Alumno", "1E", "Ian", "Los juegos de la última página estuvieron divertidos."],
+    ["Alumno", "2E", "Renata", "Gracias por incluir la receta de la abuela de mi grupo."],
+    ["Alumno", "3C", "Axel", "El diseño se ve increíble en el celular."],
+    ["Docente", "", "Profa. Lucía", "Un trabajo colectivo que refleja el esfuerzo de nuestros estudiantes."],
+    ["Docente", "", "Prof. Alberto", "Excelente iniciativa para fortalecer la lectura y la escritura."],
+    ["Docente", "", "Profa. Marisol", "Gracias a quienes colaboraron con sus textos e ilustraciones."],
+    ["Padre o madre de familia", "", "Rosa", "Nos llena de orgullo ver a nuestros hijos publicando."],
+    ["Padre o madre de familia", "", "Jorge", "La compartí con toda la familia, quedó muy bonita."],
+    ["Padre o madre de familia", "", "Elena", "Qué bueno que tengan un espacio para expresarse."],
+    ["Padre o madre de familia", "", "Mario", "Muy buen formato, se lee fácil desde el celular."],
+    ["Padre o madre de familia", "", "Patricia", "Felicidades a los maestros por impulsar este proyecto."]
+  ];
+  const comentarios = base.map(([rol, grupo, nombre, texto], i) => {
+    const c = { rol, nombre, texto, fecha: new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - (i % 12), 10 + (i % 8), 5 * i) };
+    if (grupo) c.grupo = grupo;
+    return c;
+  });
+  return { visitas, comentarios };
+}
 
-function lugarDe(v) {
-  const partes = [v.ciudad, v.region].filter((p, i, a) => p && p !== "Desconocido" && a.indexOf(p) === i);
-  return partes.length ? partes.join(", ") : "Desconocido";
+// ---------- Componentes ----------
+function tarjetaSec(titulo, color, extra) {
+  const s = h("section", "sec");
+  s.style.setProperty("--color", color);
+  const t = h("h2", "", titulo);
+  if (extra) t.append(h("small", "", extra));
+  const cuerpo = h("div", "cuerpo");
+  s.append(t, cuerpo);
+  return { s, cuerpo };
+}
+
+function vacio(icono, texto) {
+  const v = h("div", "vacio");
+  v.append(h("i", "", icono), h("span", "", texto));
+  return v;
 }
 
 function lienzo(w, hh) {
@@ -95,241 +155,312 @@ function lienzo(w, hh) {
   return c;
 }
 
+function dona(etiquetas, datos, colores) {
+  const c = lienzo(200, 200);
+  pend.push(() => charts.push(new Chart(c, {
+    type: "doughnut",
+    data: { labels: etiquetas, datasets: [{ data: datos, backgroundColor: colores, borderWidth: 3, borderColor: "#fff" }] },
+    options: { animation: false, responsive: false, devicePixelRatio: 2, cutout: "58%", plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+  })));
+  return c;
+}
+
 function leyenda(items) {
-  const l = h("div", "rp-leyenda");
-  for (const [nombre, color, texto] of items) {
+  const l = h("div", "ley");
+  for (const [nombre, color, valor] of items) {
     const f = h("div");
     const i = h("i");
     i.style.background = color;
-    f.append(i, document.createTextNode(`${nombre}: ${texto}`));
+    f.append(i, document.createTextNode(nombre), h("b", "", valor));
     l.append(f);
   }
   return l;
 }
 
-function dona(Chart, etiquetas, datos, colores) {
-  const c = lienzo(150, 150);
-  new Chart(c, {
-    type: "doughnut",
-    data: { labels: etiquetas, datasets: [{ data: datos, backgroundColor: colores, borderWidth: 2, borderColor: C.papel }] },
-    options: { animation: false, responsive: false, devicePixelRatio: 2, cutout: "58%", plugins: { legend: { display: false }, tooltip: { enabled: false } } }
-  });
-  return c;
+function pie(n, ahora) {
+  const p = h("div", "pie");
+  p.append(greca(C.tierra, C.papel));
+  const t = h("div", "texto");
+  t.append(
+    h("span", "", `Reporte generado el ${ahora.toLocaleString("es-MX", { dateStyle: "long", timeStyle: "short" })} · Voces del Corazón Maya`),
+    h("span", "", `Página ${n} de 2`)
+  );
+  p.append(t);
+  return p;
 }
 
-export async function generarReporte({ edicion, visitas, comentarios, Chart }) {
-  if (!window.html2pdf) await cargarScript(HTML2PDF);
-  if (document.fonts?.load) {
-    await Promise.all(["700 20px Cinzel", "400 12px 'Nunito Sans'", "700 12px 'Nunito Sans'"].map((f) => document.fonts.load(f).catch(() => {})));
-    await document.fonts.ready;
-  }
+function marca() {
+  const m = h("div", "marca");
+  m.append(h("span", "", "DATOS DE EJEMPLO"));
+  return m;
+}
 
-  const hoy = new Date();
-  const fechas = visitas.map((v) => v.fecha?.toDate?.()).filter(Boolean).sort((a, b) => a - b);
-  const total = visitas.length;
+// ---------- Hojas ----------
+function estadisticas(d, hoy) {
+  const fechas = d.visitas.map((v) => v.fecha).filter(Boolean).sort((a, b) => a - b);
   const porDia = new Map();
   for (const f of fechas) porDia.set(clave(f), (porDia.get(clave(f)) || 0) + 1);
-  const diasConVisitas = porDia.size;
-  const movil = visitas.filter((v) => v.dispositivo === "movil").length;
-  const pctMovil = total ? Math.round((movil / total) * 100) : 0;
-  const primera = fechas[0];
+  const total = d.visitas.length;
+  const movil = d.visitas.filter((v) => v.dispositivo === "movil").length;
+  return { total, fechas, porDia, dias: porDia.size, pctMovil: total ? Math.round((movil / total) * 100) : 0, primera: fechas[0] || null, hoy };
+}
 
-  const raiz = h("div", "rp");
-  const estilo = document.createElement("style");
-  estilo.textContent = CSS;
-  raiz.append(estilo);
+function hoja1(d, st, ejemplo) {
+  const hoja = h("section", "hoja");
 
-  const pie = (n) => {
-    const p = h("div", "rp-pie");
-    p.innerHTML = GRECA(C.tierra, C.papel);
-    const f = h("div");
-    f.append(
-      h("span", "", `Reporte generado el ${hoy.toLocaleString("es-MX", { dateStyle: "long", timeStyle: "short" })} · Voces del Corazón Maya`),
-      h("span", "", `Página ${n} de 2`)
-    );
-    p.append(f);
-    return p;
-  };
-
-  // ----- Página 1 -----
-  const p1 = h("section", "rp-pag");
-  const greca1 = h("div");
-  greca1.innerHTML = GRECA(C.oro, C.bosque);
-  const cab = h("div", "rp-cab");
-  const portada = h("img");
-  portada.alt = "";
-  const textos = h("div");
-  textos.append(
+  const cab = h("div", "cab");
+  const img = h("img");
+  img.alt = "";
+  img.src = `ediciones/${encodeURIComponent(edicion.id)}/paginas/p001-m.${edicion.ext || "webp"}`;
+  const txt = h("div", "txt");
+  txt.append(
     h("h1", "", edicion.titulo),
     h("p", "", "Escuela Secundaria Técnica #26 \"José María Luis Mora\""),
     h("p", "", edicion.fecha || ""),
-    h("p", "", `Periodo: ${primera ? fmtFecha(primera) : "sin visitas aún"} – ${fmtFecha(hoy)}`)
+    h("p", "", `Periodo: ${st.primera ? fmtFecha(st.primera) : "sin visitas aún"} – ${fmtFecha(st.hoy)}`)
   );
-  cab.append(portada, textos);
+  cab.append(img, txt, greca(C.oro, C.bosque));
 
-  const cuerpo1 = h("div", "rp-cuerpo");
-  const tarjetas = h("div", "rp-tarjetas");
-  const tarjeta = (valor, etiqueta, fondo, color = "#fff") => {
-    const t = h("div", "rp-t");
+  const tarjetas = h("div", "tarjetas");
+  const num = (valor, etiqueta, fondo, color = "#fff") => {
+    const t = h("div", "num");
     t.style.background = fondo;
     t.style.color = color;
     t.append(h("strong", "", String(valor)), h("span", "", etiqueta));
     return t;
   };
   tarjetas.append(
-    tarjeta(total, "Visitas totales", C.bosque),
-    tarjeta(diasConVisitas, "Días con visitas", C.verde),
-    tarjeta(comentarios.length, "Comentarios publicados", C.tierra),
-    tarjeta(`${pctMovil} %`, "Desde celular", C.claro, C.bosque)
+    num(st.total, "Visitas totales", C.bosque),
+    num(st.dias, "Días con visitas", C.verde),
+    num(d.comentarios.length, "Comentarios publicados", C.tierra),
+    num(`${st.pctMovil} %`, "Desde celular", C.claro, C.bosque)
   );
-  cuerpo1.append(tarjetas);
 
-  const secDia = h("div", "rp-sec");
-  secDia.append(h("h2", "", "Visitas por día"));
-  const graficas = [];
-  if (!total) {
-    secDia.append(vacio("Aún no hay visitas registradas para esta edición."));
-  } else {
-    const ini = new Date(primera.getFullYear(), primera.getMonth(), primera.getDate());
-    const fin = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  let extra = "";
+  let ventana = null;
+  if (st.primera) {
+    const fin = dia0(st.hoy);
+    let ini = masDias(dia0(st.primera), -7);
+    const largo = Math.round((fin - ini) / 86400000) + 1;
+    if (largo > 30) ini = masDias(fin, -29);
+    else if (largo < 14) ini = masDias(fin, -13);
     const dias = [];
-    for (let d = new Date(ini); d <= fin; d.setDate(d.getDate() + 1)) dias.push(new Date(d));
-    const vals = dias.map((d) => porDia.get(clave(d)) || 0);
+    for (let x = ini; x <= fin; x = masDias(x, 1)) dias.push(x);
+    const vals = dias.map((x) => st.porDia.get(clave(x)) || 0);
     const max = Math.max(...vals);
-    const idxMax = vals.indexOf(max);
-    const c = lienzo(736, 300);
-    secDia.append(c, h("p", "rp-nota", `Día con más visitas: ${fmtFecha(dias[idxMax])} (${max})`));
-    graficas.push(() => new Chart(c, {
+    const idx = vals.indexOf(max);
+    ventana = { dias, vals, idx };
+    if (max > 0) extra = `Día con más visitas: ${fmtCorta(dias[idx])} (${max})`;
+  }
+  const g = tarjetaSec("Visitas por día", C.verde, extra);
+  if (!ventana || !st.total) {
+    g.cuerpo.style.height = "320px";
+    g.cuerpo.append(vacio("📊", "Aún no hay visitas registradas para esta edición."));
+  } else {
+    const c = lienzo(688, 320);
+    g.cuerpo.append(c);
+    pend.push(() => charts.push(new Chart(c, {
       type: "bar",
-      data: { labels: dias.map(fmtCorta), datasets: [{ data: vals, backgroundColor: vals.map((_, i) => (i === idxMax ? C.oro : C.verde)), borderRadius: 3 }] },
+      data: {
+        labels: ventana.dias.map(fmtCorta),
+        datasets: [{ data: ventana.vals, backgroundColor: ventana.vals.map((_, i) => (i === ventana.idx ? C.oro : C.verde)), maxBarThickness: 28, borderRadius: 6 }]
+      },
       options: {
         animation: false, responsive: false, devicePixelRatio: 2,
         plugins: { legend: { display: false }, tooltip: { enabled: false } },
         scales: {
-          x: { ticks: { color: C.texto, font: FONT, maxTicksLimit: 12, maxRotation: 0 }, grid: { display: false } },
-          y: { beginAtZero: true, ticks: { color: C.texto, font: FONT, precision: 0 }, grid: { color: "rgba(43, 43, 43, .12)" } }
+          x: { ticks: { color: C.texto, font: FONT, maxRotation: 0, autoSkip: true, maxTicksLimit: 15 }, grid: { display: false } },
+          y: { beginAtZero: true, suggestedMax: 5, ticks: { color: C.texto, font: FONT, precision: 0 }, grid: { color: "rgba(43, 43, 43, .12)" } }
         }
       }
-    }));
+    })));
   }
-  cuerpo1.append(secDia);
 
-  const frase = h("p", "rp-frase", total
-    ? `La edición recibió ${plural(total, "visita", "visitas")} en ${plural(diasConVisitas, "día", "días")}; el ${pctMovil} % fue desde celular.`
-    : "Cuando la edición reciba visitas, aquí aparecerá un resumen.");
-  cuerpo1.append(frase);
-  p1.append(greca1, cab, cuerpo1, pie(1));
+  const r = tarjetaSec("Resumen", C.oro);
+  r.s.classList.add("resumen");
+  r.cuerpo.style.justifyContent = "center";
+  r.cuerpo.append(h("p", "", st.total
+    ? `La edición recibió ${plural(st.total, "visita", "visitas")} en ${plural(st.dias, "día", "días")}; el ${st.pctMovil} % fue desde celular.`
+    : "Cuando la edición reciba visitas, aquí aparecerá un resumen automático."));
 
-  // ----- Página 2 -----
-  const p2 = h("section", "rp-pag rp-pag2");
-  const greca2 = h("div");
-  greca2.innerHTML = GRECA(C.oro, C.bosque);
-  const cuerpo2 = h("div", "rp-cuerpo");
-  cuerpo2.style.paddingTop = "16px";
+  hoja.append(cab, tarjetas, g.s, r.s, pie(1, st.hoy));
+  if (ejemplo) hoja.append(marca());
+  return hoja;
+}
 
-  const secLugares = h("div");
-  secLugares.append(h("h2", "", "Lugares"));
-  if (!total) secLugares.append(vacio("Aún no hay visitas registradas."));
+function hoja2(d, st, ejemplo) {
+  const hoja = h("section", "hoja");
+  const rejilla = h("div", "rejilla");
+
+  const L = tarjetaSec("Lugares", C.verde, "Top 8");
+  if (!st.total) L.cuerpo.append(vacio("📍", "Aún no hay visitas registradas"));
   else {
     const m = new Map();
-    for (const v of visitas) m.set(lugarDe(v), (m.get(lugarDe(v)) || 0) + 1);
-    const top = [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+    for (const v of d.visitas) {
+      const partes = [v.ciudad, v.region].filter((p, i, a) => p && p !== "Desconocido" && a.indexOf(p) === i);
+      const k = partes.length ? partes.join(", ") : "Desconocido";
+      m.set(k, (m.get(k) || 0) + 1);
+    }
+    const top = [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
     const paleta = [C.verde, C.tierraClara, C.claro, C.tierra];
     top.forEach(([lugar, n], i) => {
-      const f = h("div", "rp-fila");
+      const f = h("div", "fila-l");
       const b = h("div", "b");
-      const r = h("div");
-      r.style.width = `${(n / top[0][1]) * 100}%`;
-      r.style.background = paleta[i % paleta.length];
-      b.append(r);
+      const rel = h("div");
+      rel.style.width = `${(n / top[0][1]) * 100}%`;
+      rel.style.background = paleta[i % paleta.length];
+      b.append(rel);
       f.append(h("span", "n", lugar), b, h("span", "v", String(n)));
-      secLugares.append(f);
+      L.cuerpo.append(f);
     });
-    secLugares.append(h("p", "rp-nota", "Ubicación aproximada según la conexión a internet"));
+    L.cuerpo.append(h("p", "nota", "Ubicación aproximada según la conexión a internet"));
   }
 
-  const dos = h("div", "rp-dos rp-sec");
-  const colDisp = h("div");
-  colDisp.append(h("h2", "", "Dispositivos"));
-  if (!total) colDisp.append(vacio("Sin datos todavía"));
+  const D = tarjetaSec("Dispositivos", C.claro);
+  if (!st.total) D.cuerpo.append(vacio("📱", "Aún no hay visitas registradas"));
   else {
-    const cuentas = DISP.map(([k]) => visitas.filter((v) => v.dispositivo === k).length);
-    const f = h("div", "rp-dona");
-    f.append(dona(Chart, DISP.map((d) => d[1]), cuentas, DISP.map((d) => d[2])),
-      leyenda(DISP.map(([, n, c], i) => [n, c, `${Math.round((cuentas[i] / total) * 100)} %`])));
-    colDisp.append(f);
+    const cuentas = DISP.map(([k]) => d.visitas.filter((v) => v.dispositivo === k).length);
+    const f = h("div", "dona");
+    f.append(dona(DISP.map((x) => x[1]), cuentas, DISP.map((x) => x[2])),
+      leyenda(DISP.map(([, n, col], i) => [n, col, `${Math.round((cuentas[i] / st.total) * 100)} %`])));
+    D.cuerpo.append(f);
   }
-  const colRol = h("div");
-  colRol.append(h("h2", "", "Comentarios por rol"));
-  if (!comentarios.length) colRol.append(vacio("Aún no hay comentarios"));
+
+  const R = tarjetaSec("Comentarios por rol", C.tierraClara);
+  if (!d.comentarios.length) R.cuerpo.append(vacio("💬", "Aún no hay comentarios"));
   else {
     const m = new Map();
-    for (const c of comentarios) m.set(c.rol, (m.get(c.rol) || 0) + 1);
+    for (const c of d.comentarios) m.set(c.rol, (m.get(c.rol) || 0) + 1);
     const items = [...m.entries()];
-    const colores = items.map(([r]) => ROLES[r] || "#9AA5A0");
-    const f = h("div", "rp-dona");
-    f.append(dona(Chart, items.map((i) => i[0]), items.map((i) => i[1]), colores),
-      leyenda(items.map(([r, n], i) => [r === "Padre o madre de familia" ? "Padres" : r, colores[i], String(n)])));
-    colRol.append(f);
+    const colores = items.map(([rol]) => ROLES[rol] || "#9AA5A0");
+    const f = h("div", "dona");
+    f.append(dona(items.map((i) => i[0]), items.map((i) => i[1]), colores),
+      leyenda(items.map(([rol, n], i) => [rol === "Padre o madre de familia" ? "Padres" : rol, colores[i], String(n)])));
+    R.cuerpo.append(f);
   }
-  dos.append(colDisp, colRol);
 
-  const secGrupos = h("div", "rp-sec");
-  secGrupos.append(h("h2", "", "Participación de alumnos por grupo"));
-  const alumnos = comentarios.filter((c) => c.rol === "Alumno" && c.grupo);
-  if (!alumnos.length) secGrupos.append(vacio("Aún no hay comentarios de alumnos"));
+  const G = tarjetaSec("Alumnos por grupo", ROLES.Alumno);
+  const alumnos = d.comentarios.filter((c) => c.rol === "Alumno" && c.grupo);
+  if (!alumnos.length) G.cuerpo.append(vacio("🎓", "Aún no hay comentarios de alumnos"));
   else {
-    const cuenta = Object.fromEntries(GRUPOS.map((g) => [g, 0]));
+    const cuenta = Object.fromEntries(GRUPOS.map((x) => [x, 0]));
     for (const c of alumnos) if (c.grupo in cuenta) cuenta[c.grupo]++;
     const max = Math.max(1, ...Object.values(cuenta));
-    const barras = h("div", "rp-grupos");
-    for (const g of GRUPOS) {
-      const col = h("div", "rp-g");
+    const barras = h("div", "grupos");
+    for (const x of GRUPOS) {
+      const col = h("div", "g");
       const b = h("div");
-      b.style.height = `${Math.max(4, (cuenta[g] / max) * 72)}px`;
-      b.style.background = cuenta[g] ? ROLES.Alumno : C.gris;
-      col.append(h("b", "", String(cuenta[g])), b, h("span", "", g));
+      b.style.height = `${Math.max(4, (cuenta[x] / max) * 140)}px`;
+      b.style.background = cuenta[x] ? ROLES.Alumno : C.gris;
+      col.append(h("b", "", String(cuenta[x])), b, h("span", "", x));
       barras.append(col);
     }
-    secGrupos.append(barras);
+    G.cuerpo.append(barras);
   }
 
-  const secCom = h("div", "rp-sec");
-  secCom.append(h("h2", "", "Comentarios destacados"));
-  if (!comentarios.length) secCom.append(vacio("Aún no hay comentarios publicados"));
+  const K = tarjetaSec("Comentarios destacados", C.oro);
+  K.s.classList.add("ancho");
+  if (!d.comentarios.length) K.cuerpo.append(vacio("✨", "Aún no hay comentarios publicados"));
   else {
-    const recientes = [...comentarios].sort((a, b) => (b.fecha?.toMillis?.() || 0) - (a.fecha?.toMillis?.() || 0)).slice(0, 3);
+    const lista = h("div", "coms");
+    const recientes = [...d.comentarios].sort((a, b) => (b.fecha?.getTime?.() || 0) - (a.fecha?.getTime?.() || 0)).slice(0, 3);
     for (const c of recientes) {
-      const t = h("div", "rp-com");
+      const t = h("div", "com");
       t.style.borderLeftColor = ROLES[c.rol] || "#9AA5A0";
-      const cuerpo = c.texto.length > 220 ? `${c.texto.slice(0, 217)}…` : c.texto;
+      const cuerpo = c.texto.length > 230 ? `${c.texto.slice(0, 227)}…` : c.texto;
       const rol = c.rol === "Alumno" && c.grupo ? `Alumno · ${c.grupo}` : c.rol;
       t.append(h("p", "", `“${cuerpo}”`), h("small", "", `— ${c.nombre} · ${rol}`));
-      secCom.append(t);
+      lista.append(t);
     }
+    K.cuerpo.append(lista);
   }
 
-  cuerpo2.append(secLugares, dos, secGrupos, secCom);
-  p2.append(greca2, cuerpo2, pie(2));
-  raiz.append(p1, p2);
-  const fuera = h("div");
-  fuera.style.cssText = "position:fixed;left:-10000px;top:0;width:816px;pointer-events:none";
-  fuera.append(raiz);
-  document.body.append(fuera);
+  rejilla.append(L.s, D.s, R.s, G.s, K.s);
+  hoja.append(rejilla, pie(2, st.hoy));
+  if (ejemplo) hoja.append(marca());
+  return hoja;
+}
 
+function pintar() {
+  charts.forEach((c) => c.destroy());
+  charts = [];
+  pend = [];
+  const ejemplo = $("ejemplo").checked;
+  const d = ejemplo ? datosEjemplo() : reales;
+  const st = estadisticas(d, new Date());
+  $("hojas").replaceChildren(hoja1(d, st, ejemplo), hoja2(d, st, ejemplo));
+  pend.forEach((f) => f());
+  ajustarEscala();
+}
+
+// En pantallas angostas se reduce la vista; el PDF siempre sale a 816 px.
+function ajustarEscala() {
+  const k = Math.min(1, (innerWidth - 16) / 816);
+  const esc = $("escala");
+  esc.style.transform = k < 1 ? `scale(${k})` : "";
+  esc.style.marginLeft = `${Math.max(8, (innerWidth - 816 * k) / 2)}px`;
+  $("vista").style.height = `${esc.offsetHeight * k + 56}px`;
+}
+addEventListener("resize", ajustarEscala);
+
+// ---------- PDF ----------
+async function descargar() {
+  const btn = $("descargar");
+  const cont = $("hojas");
+  btn.disabled = true;
+  btn.textContent = "Generando…";
+  msg("");
   try {
-    await cargarImagen(portada, `ediciones/${encodeURIComponent(edicion.id)}/paginas/p001-m.${edicion.ext || "webp"}`);
-    graficas.forEach((g) => g());
-    await new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)));
+    if (!window.html2pdf) await cargarScript(HTML2PDF);
+    window.scrollTo(0, 0);
+    cont.classList.add("pdf");
+    await document.fonts.ready;
+    await Promise.all([...cont.querySelectorAll("img")].map((i) => (i.complete ? null : new Promise((ok) => { i.onload = ok; i.onerror = ok; }))));
+    await esperarFrames();
+    const nombre = $("ejemplo").checked ? "Reporte-EJEMPLO.pdf" : `Reporte-${edicion.id}.pdf`;
     await window.html2pdf().set({
       margin: 0,
-      filename: `Reporte-${edicion.id}.pdf`,
+      filename: nombre,
       image: { type: "jpeg", quality: 0.95 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: C.papel, scrollX: 0, scrollY: 0, windowWidth: 816 },
-      jsPDF: { unit: "pt", format: "letter", orientation: "portrait" },
-      pagebreak: { mode: ["css"], before: ".rp-pag2" }
-    }).from(raiz).save();
+      html2canvas: { scale: 2, scrollX: 0, scrollY: 0, windowWidth: 816, useCORS: true, backgroundColor: C.papel },
+      jsPDF: { unit: "px", format: [816, 1056], orientation: "portrait", hotfixes: ["px_scaling"] },
+      pagebreak: { mode: ["css"], before: ".hoja + .hoja" }
+    }).from(cont).save();
+  } catch (e) {
+    console.warn("Reporte PDF:", e.message);
+    msg("No se pudo generar el PDF. Inténtalo de nuevo.");
   } finally {
-    fuera.remove();
+    cont.classList.remove("pdf");
+    btn.disabled = false;
+    btn.textContent = "Descargar PDF";
   }
 }
+
+// ---------- Inicio ----------
+async function iniciar() {
+  try {
+    if (!ed || !/^[\w.-]+$/.test(ed)) throw new Error("Edición no especificada");
+    const lista = await (await fetch("ediciones/ediciones.json", { cache: "no-store" })).json();
+    edicion = lista.find((e) => e.id === ed);
+    if (!edicion) throw new Error("No se encontró la edición");
+    const m = await import(CHART);
+    m.Chart.register(...m.registerables);
+    Chart = m.Chart;
+    reales = await cargarReales();
+    await Promise.all(["700 20px Cinzel", "400 12px 'Nunito Sans'", "700 12px 'Nunito Sans'"].map((f) => document.fonts.load(f).catch(() => {})));
+    await document.fonts.ready;
+    pintar();
+    $("descargar").disabled = false;
+  } catch (e) {
+    console.warn("Reporte:", e.code || e.message);
+    msg(e.message === "Edición no especificada" || e.message === "No se encontró la edición" ? e.message : "No se pudieron cargar los datos del reporte.");
+  }
+}
+
+$("ejemplo").addEventListener("change", () => { if (edicion && reales) pintar(); });
+$("descargar").addEventListener("click", descargar);
+
+onAuthStateChanged(auth, (user) => {
+  if (!user || user.uid !== ADMIN_UID) { location.replace("admin.html"); return; }
+  iniciar();
+});

@@ -1,0 +1,97 @@
+:root {
+  --papel: #FBF7EF; --bosque: #0D3B2B; --verde: #1B5E20; --claro: #4CAF50;
+  --tierra: #6D4C41; --tierra-clara: #D4A574; --oro: #E3B14A; --texto: #2B2B2B;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: #8c8c8c; font-family: "Nunito Sans", system-ui, sans-serif; color: var(--texto); }
+[hidden] { display: none !important; }
+
+/* Barra superior: no forma parte del PDF */
+.barra-sup {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: 56px;
+  display: flex; align-items: center; gap: 12px; padding: 0 12px; overflow-x: auto;
+  background: var(--bosque); color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, .3);
+}
+.btn-sup {
+  flex: none; font: 700 14px "Nunito Sans", sans-serif; color: #fff; text-decoration: none; cursor: pointer;
+  padding: 9px 14px; border-radius: 999px; border: 1.5px solid rgba(227, 177, 74, .7); background: transparent;
+}
+.btn-sup.primario { background: var(--verde); border-color: var(--verde); }
+.btn-sup:disabled { opacity: .5; cursor: default; }
+.interruptor { flex: none; display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+.interruptor input { width: 18px; height: 18px; accent-color: var(--claro); }
+.msg-sup { flex: none; font-size: 13px; color: #ffd9cf; }
+
+.vista { padding-top: 56px; overflow-x: hidden; }
+.escala { width: 816px; transform-origin: top left; padding: 24px 0; }
+.hojas { width: 816px; display: flex; flex-direction: column; gap: 24px; }
+.hojas.pdf { display: block; }
+.hojas.pdf .hoja { box-shadow: none; }
+.hojas.pdf .hoja + .hoja { margin-top: 0; }
+
+/* Hoja carta */
+.hoja {
+  position: relative; width: 816px; height: 1056px; overflow: hidden; flex: none;
+  padding: 48px; background: var(--papel); color: var(--texto);
+  font-family: "Nunito Sans", system-ui, sans-serif; box-shadow: 0 6px 24px rgba(0, 0, 0, .35);
+  display: flex; flex-direction: column; gap: 20px;
+}
+.hoja h1, .hoja h2 { font-family: "Cinzel", Georgia, serif; margin: 0; }
+.hoja svg.greca { display: block; width: 100%; height: 100%; }
+
+/* Hoja 1 */
+.cab {
+  position: relative; flex: none; margin: -48px -48px 0; height: 264px; padding: 36px 48px 30px;
+  display: flex; align-items: center; gap: 28px; background: var(--bosque); color: #fff;
+}
+.cab img { height: 180px; width: auto; border-radius: 4px; border: 3px solid var(--oro); background: #fff; flex: none; }
+.cab .txt { min-width: 0; }
+.cab h1 { font-size: 30px; line-height: 1.15; color: var(--oro); overflow-wrap: anywhere; }
+.cab p { margin: 7px 0 0; font-size: 14px; opacity: .93; }
+.cab .franja { position: absolute; left: 0; right: 0; bottom: 0; height: 14px; }
+.tarjetas { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.num { height: 112px; border-radius: 14px; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 6px; }
+.num strong { font-family: "Cinzel", Georgia, serif; font-size: 38px; line-height: 1.1; }
+.num span { margin-top: 4px; font-size: 12px; font-weight: 700; }
+
+/* Tarjetas blancas */
+.sec { background: #fff; border: 1px solid #E6DEC9; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+.sec > h2 { flex: none; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 14px; color: var(--bosque); border-left: 5px solid var(--color, var(--verde)); padding-left: 9px; margin-bottom: 10px; }
+.sec > h2 small { font-family: "Nunito Sans", sans-serif; font-size: 11px; font-weight: 700; color: var(--tierra); }
+.sec .cuerpo { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.vacio { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; color: var(--tierra); font-size: 13px; padding: 0 10px; }
+.vacio i { font-style: normal; font-size: 30px; }
+.hoja > .sec { flex: none; }
+.hoja > .resumen { flex: 1; min-height: 0; justify-content: center; border-left: 6px solid var(--oro); }
+.resumen p { margin: 0; font-size: 19px; line-height: 1.45; font-family: "Cinzel", Georgia, serif; color: var(--bosque); }
+
+/* Hoja 2 */
+.rejilla { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 262px 262px 1fr; gap: 16px; }
+.rejilla .ancho { grid-column: 1 / -1; }
+.fila-l { display: flex; align-items: center; gap: 8px; height: 22px; font-size: 11.5px; }
+.fila-l .n { width: 104px; flex: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fila-l .b { flex: 1; height: 11px; background: #EFE8D8; border-radius: 6px; overflow: hidden; }
+.fila-l .b div { height: 100%; border-radius: 6px; }
+.fila-l .v { width: 22px; text-align: right; font-weight: 700; flex: none; }
+.nota { margin: auto 0 0; padding-top: 4px; font-size: 10px; color: var(--tierra); }
+.dona { flex: 1; display: flex; align-items: center; justify-content: center; gap: 14px; }
+.dona canvas { flex: none; }
+.ley { display: flex; flex-direction: column; gap: 8px; font-size: 12px; min-width: 0; }
+.ley b { display: block; font-size: 14px; }
+.ley i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
+.grupos { flex: 1; display: flex; align-items: flex-end; gap: 3px; }
+.g { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; font-size: 9px; }
+.g b { margin-bottom: 2px; font-size: 9.5px; }
+.g div { width: 100%; border-radius: 3px 3px 0 0; }
+.coms { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.com { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: 8px 14px; background: var(--papel); border-radius: 8px; border-left: 5px solid #D9D4C7; }
+.com p { margin: 0 0 4px; font-size: 12.5px; font-style: italic; line-height: 1.4; overflow-wrap: anywhere; }
+.com small { font-size: 11px; font-weight: 700; color: var(--tierra); }
+
+/* Pie y marca de agua */
+.pie { position: absolute; left: 0; right: 0; bottom: 0; height: 48px; }
+.pie .franja { position: absolute; left: 0; right: 0; top: 0; height: 12px; }
+.pie .texto { position: absolute; left: 48px; right: 48px; top: 18px; display: flex; justify-content: space-between; font-size: 10px; color: var(--tierra); }
+.marca { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; pointer-events: none; overflow: hidden; }
+.marca span { transform: rotate(-30deg); white-space: nowrap; font: 700 62px "Cinzel", Georgia, serif; letter-spacing: 4px; color: rgba(13, 59, 43, .13); }

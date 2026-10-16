@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Reporte – Voces del Corazón Maya</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/reporte.css">
+</head>
+<body>
+  <div class="barra-sup">
+    <a href="admin.html" class="btn-sup">← Volver al panel</a>
+    <button id="descargar" class="btn-sup primario" type="button" disabled>Descargar PDF</button>
+    <label class="interruptor"><input id="ejemplo" type="checkbox"> Ver con datos de ejemplo</label>
+    <span id="msg" class="msg-sup" role="status"></span>
+  </div>
+  <div id="vista" class="vista">
+    <div id="escala" class="escala"><div id="hojas" class="hojas"></div></div>
+  </div>
+  <script type="module" src="js/reporte.js"></script>
+</body>
+</html>
