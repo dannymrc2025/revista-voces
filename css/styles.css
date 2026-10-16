@@ -188,3 +188,5 @@ body.visor {
 .sitio-pie { text-align: center; padding: 1.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom)); }
 .enlace-admin { display: inline-flex; padding: .5rem; color: var(--texto); opacity: .35; transition: opacity .15s; }
 .enlace-admin:hover, .enlace-admin:focus-visible { opacity: 1; outline: none; }
+.aviso-visitas { margin: .25rem 0 0; font-size: .7rem; opacity: .5; }
+.aviso-visor { flex: none; margin: 0; padding: 0 .5rem calc(.35rem + env(safe-area-inset-bottom)); text-align: center; }

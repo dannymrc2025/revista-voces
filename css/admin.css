@@ -63,5 +63,25 @@ progress { width: 100%; height: 1rem; accent-color: var(--jade); }
 .miniaturas img { width: 100%; height: auto; border-radius: 4px; background: var(--papel); }
 #ne-enlace { overflow-wrap: anywhere; }
 
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
+@media (max-width: 560px) { .stats { grid-template-columns: 1fr; } }
+.stat { display: flex; flex-direction: column; gap: .15rem; padding: .9rem; min-width: 0; background: rgba(255, 255, 255, .04); border: 1.5px solid var(--oro-suave); border-radius: 14px; }
+.stat-t { font-size: .85rem; opacity: .8; }
+.stat-v { font-size: 1.5rem; color: var(--oro); overflow-wrap: anywhere; }
+.est-contar { display: flex; align-items: center; gap: .6rem; margin-top: .75rem; font-size: .95rem; }
+.est-contar input { width: 1.25rem; height: 1.25rem; flex: none; accent-color: var(--jade); }
+.est-fila { display: flex; gap: .9rem; align-items: center; width: 100%; padding: .6rem .75rem; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: rgba(255, 255, 255, .04); border: 1.5px solid var(--oro-suave); border-radius: 14px; }
+.est-fila img { width: 48px; height: auto; border-radius: 4px; background: var(--papel); flex: none; }
+.est-fila div { min-width: 0; display: flex; flex-direction: column; gap: .15rem; }
+.est-fila strong { font-family: var(--titulos); overflow-wrap: anywhere; }
+.est-h { margin: 0 0 .6rem; font-size: 1rem; color: var(--oro); }
+.grafica { position: relative; height: 220px; width: 100%; }
+.barra-fila { margin-bottom: .6rem; }
+.barra-cab { display: flex; justify-content: space-between; gap: .75rem; font-size: .9rem; }
+.barra-cab span { min-width: 0; overflow-wrap: anywhere; }
+.barra-pista { height: .5rem; margin-top: .2rem; background: rgba(243, 234, 216, .12); border-radius: 999px; overflow: hidden; }
+.barra-rel { height: 100%; background: var(--jade); border-radius: 999px; }
+
 .volver-sitio { display: block; padding: calc(.6rem + env(safe-area-inset-top)) 1rem .2rem; text-decoration: none; font-size: .9rem; }
 .login { min-height: calc(100dvh - 3rem); }

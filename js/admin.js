@@ -8,6 +8,7 @@ import {
 import { firebaseConfig, ADMIN_UID } from "./firebase-config.js";
 import { iniciarPublicar, detenerPublicar, alternarVisible, eliminarEdicion } from "./publicar.js";
 import { GRUPOS, claseRol, etiquetaRol } from "./roles.js";
+import { iniciarEstadisticas, abrirEstadisticas, detenerEstadisticas } from "./estadisticas.js";
 
 const $ = (id) => document.getElementById(id);
 const app = initializeApp(firebaseConfig);
@@ -217,6 +218,8 @@ document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () 
   document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("activa", x === t));
   $("tab-comentarios").hidden = t.dataset.tab !== "comentarios";
   $("tab-ediciones").hidden = t.dataset.tab !== "ediciones";
+  $("tab-estadisticas").hidden = t.dataset.tab !== "estadisticas";
+  if (t.dataset.tab === "estadisticas") abrirEstadisticas();
 }));
 
 // ---------- Sesión ----------
@@ -239,6 +242,7 @@ $("form-login").addEventListener("submit", async (e) => {
   msg.textContent = "";
   try {
     await signInWithEmailAndPassword(auth, $("l-correo").value.trim(), $("l-clave").value);
+    try { localStorage.setItem("revista-no-contar", "1"); } catch { /* sin almacenamiento */ }
   } catch (err) {
     msg.textContent = errorAuth(err);
   }
@@ -257,10 +261,12 @@ onAuthStateChanged(auth, async (user) => {
   $("panel").hidden = !dentro;
   detener();
   detenerPublicar();
+  detenerEstadisticas();
   if (dentro) {
     $("form-login").reset();
     await cargarEdiciones();
     iniciarPublicar({ db, getEdiciones: () => ediciones, onCambio: aplicarEdiciones });
+    iniciarEstadisticas({ db, getEdiciones: () => ediciones, getPublicados: () => publicados });
     escuchar();
   }
 });
