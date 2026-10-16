@@ -1,6 +1,7 @@
 import {
   collection, query, where, getDocs, getCountFromServer, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { generarReporte } from "./reporte.js";
 
 const $ = (id) => document.getElementById(id);
 const NO_CONTAR = "revista-no-contar";
@@ -14,6 +15,7 @@ let cargando = false;
 let grafica = null;
 let chartLib = null;
 let seleccion = null;
+let visitasCache = null;
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -178,7 +180,9 @@ async function cargarEdicion(id) {
   try {
     const snap = await getDocs(query(collection(db, "visitas"), where("edicion", "==", id)));
     if (seleccion !== id) return;
-    const g = agrupar(snap.docs.map((d) => d.data()));
+    const datos = snap.docs.map((d) => d.data());
+    visitasCache = { id, datos };
+    const g = agrupar(datos);
     $("est-detalle-msg").textContent = `${fmt(g.total)} ${g.total === 1 ? "visita" : "visitas"} en total`;
     pintarLugares(g.lugares);
     pintarDispositivos(g.disp, g.total);
@@ -239,6 +243,30 @@ export function detenerEstadisticas() {
 
 $("est-actualizar").addEventListener("click", cargarTodo);
 $("est-ed").addEventListener("change", (e) => cargarEdicion(e.target.value));
+
+$("est-pdf").addEventListener("click", async () => {
+  const id = $("est-ed").value;
+  const edicion = getEdiciones().find((e) => e.id === id);
+  if (!edicion) return;
+  const btn = $("est-pdf");
+  const texto = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Generando reporte…";
+  try {
+    const visitas = visitasCache?.id === id
+      ? visitasCache.datos
+      : (await getDocs(query(collection(db, "visitas"), where("edicion", "==", id)))).docs.map((d) => d.data());
+    const comSnap = await getDocs(query(collection(db, "comentarios"), where("edicion", "==", id), where("aprobado", "==", true)));
+    await generarReporte({ edicion, visitas, comentarios: comSnap.docs.map((d) => d.data()), Chart: await cargarChart() });
+    $("est-detalle-msg").textContent = "";
+  } catch (e) {
+    console.warn("Reporte PDF:", e.code || e.message);
+    $("est-detalle-msg").textContent = "No se pudo generar el reporte. Inténtalo de nuevo.";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = texto;
+  }
+});
 $("est-contar").addEventListener("change", (e) => {
   try {
     if (e.target.checked) localStorage.removeItem(NO_CONTAR);
