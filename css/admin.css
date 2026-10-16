@@ -78,6 +78,20 @@ progress { width: 100%; height: 1rem; accent-color: var(--jade); }
 .est-h { margin: 0 0 .6rem; font-size: 1rem; color: var(--oro); }
 .grafica { position: relative; height: 220px; width: 100%; }
 .barra-fila { margin-bottom: .6rem; }
+.art-fila { display: flex; flex-wrap: wrap; gap: .75rem; align-items: flex-start; padding: .75rem; background: rgba(255, 255, 255, .04); border: 1.5px solid var(--oro-suave); border-radius: 14px; }
+.art-fila img { width: 52px; height: auto; border-radius: 4px; background: var(--papel); flex: none; }
+.art-campos { flex: 1 1 14rem; min-width: 0; display: flex; flex-direction: column; gap: .5rem; }
+.art-dos { display: flex; gap: .5rem; }
+.art-dos > * { flex: 1 1 0; min-width: 0; }
+.art-pags { display: flex; gap: .5rem; }
+.art-pags label { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: .2rem; font-size: .8rem; opacity: .9; }
+.art-acc { flex: 1 1 100%; }
+.reac-fila { padding: .6rem .75rem; border: 1.5px solid var(--oro-suave); border-radius: 12px; background: rgba(255, 255, 255, .04); }
+.reac-fila.top { border-color: var(--oro); background: rgba(227, 177, 74, .12); }
+.reac-fila strong { display: block; overflow-wrap: anywhere; }
+.reac-fila span { font-size: .9rem; opacity: .9; }
+.reac-fila em { font-style: normal; font-size: .75rem; color: var(--oro); font-weight: 700; }
+.barra-fila { margin-bottom: .6rem; }
 .barra-cab { display: flex; justify-content: space-between; gap: .75rem; font-size: .9rem; }
 .barra-cab span { min-width: 0; overflow-wrap: anywhere; }
 .barra-pista { height: .5rem; margin-top: .2rem; background: rgba(243, 234, 216, .12); border-radius: 999px; overflow: hidden; }

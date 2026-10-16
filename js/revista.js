@@ -35,6 +35,12 @@
 
   const esDoble = () => innerWidth >= 900;
 
+  // La barra de reacciones escucha este evento (js/reacciones.js).
+  function notificar(paginas, lectura) {
+    window.vocesPaginas = { paginas, lectura };
+    window.dispatchEvent(new CustomEvent('voces:pagina', { detail: window.vocesPaginas }));
+  }
+
   // Asigna src solo a la página actual, 2 anteriores y 3 siguientes.
   function cargar(centro) {
     for (let i = Math.max(0, centro - 2); i <= Math.min(total - 1, centro + 3); i++) {
@@ -54,6 +60,7 @@
       : `${actual + 1} / ${total}`;
     $('prev').disabled = actual === 0;
     $('next').disabled = ultima;
+    notificar(doble && actual > 0 && actual + 1 < total ? [actual, actual + 1] : [actual], false);
   }
 
   function construir() {
@@ -148,6 +155,7 @@
     $('lec-pag').textContent = `Página ${lec + 1} de ${total}`;
     $('lec-prev').disabled = lec === 0;
     $('lec-next').disabled = lec >= total - 1;
+    notificar([lec], true);
   }
 
   function abrirLectura(i) {

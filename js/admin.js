@@ -9,6 +9,7 @@ import { firebaseConfig, ADMIN_UID } from "./firebase-config.js";
 import { iniciarPublicar, detenerPublicar, alternarVisible, eliminarEdicion } from "./publicar.js";
 import { GRUPOS, claseRol, etiquetaRol } from "./roles.js";
 import { iniciarEstadisticas, abrirEstadisticas, detenerEstadisticas } from "./estadisticas.js";
+import { iniciarArticulos, detenerArticulos, abrirEditorArticulos } from "./articulos.js";
 
 const $ = (id) => document.getElementById(id);
 const app = initializeApp(firebaseConfig);
@@ -116,6 +117,7 @@ function pintarEdiciones() {
 
     const acc = el("div", "acciones conf");
     const normal = () => acc.replaceChildren(
+      boton("Artículos", "", () => abrirEditorArticulos(e)),
       boton(oculta ? "Mostrar" : "Ocultar", "", () => operar(() => alternarVisible(e.id))),
       boton("Eliminar", "peligro", confirmar)
     );
@@ -262,10 +264,12 @@ onAuthStateChanged(auth, async (user) => {
   detener();
   detenerPublicar();
   detenerEstadisticas();
+  detenerArticulos();
   if (dentro) {
     $("form-login").reset();
     await cargarEdiciones();
     iniciarPublicar({ db, getEdiciones: () => ediciones, onCambio: aplicarEdiciones });
+    iniciarArticulos({ db });
     iniciarEstadisticas({ db, getEdiciones: () => ediciones, getPublicados: () => publicados });
     escuchar();
   }

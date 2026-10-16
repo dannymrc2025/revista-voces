@@ -184,6 +184,32 @@ body.visor {
 .c-trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 #msg-comentario { margin: 0; min-height: 1.2em; color: var(--oro); font-size: .9rem; }
 
+/* Reacciones por artículo */
+.art-barra { flex: none; padding: .3rem .6rem .35rem; border-top: 1px solid rgba(227, 177, 74, .2); }
+.art-barra[hidden] { display: none; }
+.art-barra.vacia { visibility: hidden; }
+.art-titulo { margin: 0 0 .3rem; font-size: .8rem; font-weight: 700; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.art-botones { display: grid; grid-template-columns: repeat(4, 1fr); gap: .4rem; }
+.reac {
+  position: relative; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: .3rem;
+  min-height: 2.9rem; padding: .25rem .15rem; font: 700 .85rem var(--cuerpo); color: var(--texto); cursor: pointer;
+  background: rgba(255, 255, 255, .05); border: 1.5px solid rgba(227, 177, 74, .25); border-radius: 12px;
+}
+.reac .e { font-size: 1.1rem; line-height: 1.2; }
+.reac .t { flex-basis: 100%; text-align: center; font-size: .62rem; font-weight: 600; opacity: .8; white-space: nowrap; }
+.reac.usada { border-color: var(--oro); background: rgba(227, 177, 74, .16); }
+.vuelo { position: absolute; left: 50%; top: 0; font-size: 1.4rem; pointer-events: none; animation: vuelo .8s ease-out forwards; }
+@keyframes vuelo {
+  from { transform: translate(-50%, 0) scale(1); opacity: 1; }
+  to { transform: translate(-50%, -3rem) scale(2); opacity: 0; }
+}
+.art-barra.en-lectura {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  padding: .4rem calc(.6rem + env(safe-area-inset-right)) calc(.4rem + env(safe-area-inset-bottom)) calc(.6rem + env(safe-area-inset-left));
+  background: rgba(18, 32, 28, .94); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.lectura.con-barra .lec-vista { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
+
 /* Pie del sitio */
 .sitio-pie { text-align: center; padding: 1.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom)); }
 .enlace-admin { display: inline-flex; padding: .5rem; color: var(--texto); opacity: .35; transition: opacity .15s; }

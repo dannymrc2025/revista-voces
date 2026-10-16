@@ -13,6 +13,7 @@ const ROLES = { "Alumno": "#4FB3D9", "Docente": "#E3B14A", "Padre o madre de fam
 const DISP = [["movil", "Celular", "#4CAF50"], ["tablet", "Tableta", "#D4A574"], ["escritorio", "Computadora", "#6D4C41"]];
 const GRUPOS = ["1A", "1B", "1C", "1D", "1E", "2A", "2B", "2C", "2D", "2E", "3A", "3B", "3C", "3D", "3E"];
 const FONT = { family: "'Nunito Sans', sans-serif" };
+const EMOJIS = [["aplauso", "👏"], ["wow", "🤯"], ["corazon", "❤️"], ["idea", "💡"]];
 
 const $ = (id) => document.getElementById(id);
 const ed = new URLSearchParams(location.search).get("ed");
@@ -66,13 +67,15 @@ const esperarFrames = () => new Promise((ok) => requestAnimationFrame(() => requ
 const aFecha = (v) => (v?.toDate ? v.toDate() : null);
 
 async function cargarReales() {
-  const [v, c] = await Promise.all([
+  const [v, c, r] = await Promise.all([
     getDocs(query(collection(db, "visitas"), where("edicion", "==", ed))),
-    getDocs(query(collection(db, "comentarios"), where("edicion", "==", ed), where("aprobado", "==", true)))
+    getDocs(query(collection(db, "comentarios"), where("edicion", "==", ed), where("aprobado", "==", true))),
+    getDocs(query(collection(db, "reacciones"), where("edicion", "==", ed))).catch(() => ({ docs: [] }))
   ]);
   return {
     visitas: v.docs.map((d) => ({ ...d.data(), fecha: aFecha(d.data().fecha) })),
-    comentarios: c.docs.map((d) => ({ ...d.data(), fecha: aFecha(d.data().fecha) }))
+    comentarios: c.docs.map((d) => ({ ...d.data(), fecha: aFecha(d.data().fecha) })),
+    reacciones: r.docs.map((d) => d.data())
   };
 }
 
@@ -126,7 +129,18 @@ function datosEjemplo() {
     if (grupo) c.grupo = grupo;
     return c;
   });
-  return { visitas, comentarios };
+  return {
+    visitas,
+    comentarios,
+    reacciones: [
+      { titulo: "Así funciona un robot", aplauso: 18, wow: 12, corazon: 7, idea: 15 },
+      { titulo: "Leyendas de la ceiba", aplauso: 14, wow: 6, corazon: 17, idea: 4 },
+      { titulo: "Mapa de nuestra comunidad", aplauso: 9, wow: 8, corazon: 5, idea: 10 },
+      { titulo: "Fracciones en la cocina", aplauso: 7, wow: 3, corazon: 2, idea: 11 },
+      { titulo: "Palabras mayas del día", aplauso: 6, wow: 2, corazon: 8, idea: 5 },
+      { titulo: "Reglas de convivencia", aplauso: 1, wow: 0, corazon: 1, idea: 0 }
+    ]
+  };
 }
 
 // ---------- Componentes ----------
@@ -358,8 +372,25 @@ function hoja2(d, st, ejemplo) {
     G.cuerpo.append(barras);
   }
 
+  const A = tarjetaSec("Artículos más reaccionados", C.claro, "Top 5");
+  const conReac = (d.reacciones || [])
+    .map((r) => ({ ...r, total: EMOJIS.reduce((s, [k]) => s + (r[k] || 0), 0) }))
+    .filter((r) => r.total > 0)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5);
+  if (!conReac.length) A.cuerpo.append(vacio("👏", "Aún no hay reacciones a los artículos"));
+  else {
+    for (const r of conReac) {
+      const f = h("div", "ar");
+      f.append(
+        h("span", "t", r.titulo),
+        h("span", "e", `${EMOJIS.map(([k, e]) => `${e} ${r[k] || 0}`).join("   ")}   ·   Total ${r.total}`)
+      );
+      A.cuerpo.append(f);
+    }
+  }
+
   const K = tarjetaSec("Comentarios destacados", C.oro);
-  K.s.classList.add("ancho");
   if (!d.comentarios.length) K.cuerpo.append(vacio("✨", "Aún no hay comentarios publicados"));
   else {
     const lista = h("div", "coms");
@@ -367,7 +398,7 @@ function hoja2(d, st, ejemplo) {
     for (const c of recientes) {
       const t = h("div", "com");
       t.style.borderLeftColor = ROLES[c.rol] || "#9AA5A0";
-      const cuerpo = c.texto.length > 230 ? `${c.texto.slice(0, 227)}…` : c.texto;
+      const cuerpo = c.texto.length > 150 ? `${c.texto.slice(0, 147)}…` : c.texto;
       const rol = c.rol === "Alumno" && c.grupo ? `Alumno · ${c.grupo}` : c.rol;
       t.append(h("p", "", `“${cuerpo}”`), h("small", "", `— ${c.nombre} · ${rol}`));
       lista.append(t);
@@ -375,7 +406,7 @@ function hoja2(d, st, ejemplo) {
     K.cuerpo.append(lista);
   }
 
-  rejilla.append(L.s, D.s, R.s, G.s, K.s);
+  rejilla.append(L.s, D.s, R.s, G.s, A.s, K.s);
   hoja.append(rejilla, pie(2, st.hoy));
   if (ejemplo) hoja.append(marca());
   return hoja;

@@ -47,6 +47,23 @@ service cloud.firestore {
                     && request.resource.data.dispositivo in ['movil', 'tablet', 'escritorio'];
     }
 
+    match /articulos/{edicion} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == "Tnr5Z6CjmMfsYnVxLjWQbE9uU513";
+    }
+
+    function suma1(campo) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([campo])
+          && request.resource.data[campo] == resource.data[campo] + 1;
+    }
+
+    match /reacciones/{id} {
+      allow read: if true;
+      allow create, delete: if request.auth != null && request.auth.uid == "Tnr5Z6CjmMfsYnVxLjWQbE9uU513";
+      allow update: if (request.auth != null && request.auth.uid == "Tnr5Z6CjmMfsYnVxLjWQbE9uU513")
+                    || suma1('aplauso') || suma1('wow') || suma1('corazon') || suma1('idea');
+    }
+
     match /config/{doc} {
       allow read, write: if request.auth != null && request.auth.uid == "Tnr5Z6CjmMfsYnVxLjWQbE9uU513";
     }

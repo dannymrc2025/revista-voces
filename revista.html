@@ -23,6 +23,16 @@
     <div id="libro" class="libro" aria-live="polite"></div>
   </main>
 
+  <div id="art-barra" class="art-barra" hidden>
+    <p id="art-titulo" class="art-titulo"></p>
+    <div class="art-botones">
+      <button type="button" class="reac" data-campo="aplauso" data-emoji="👏" aria-pressed="false"><span class="e">👏</span><span class="n">0</span><span class="t">Me gustó</span></button>
+      <button type="button" class="reac" data-campo="wow" data-emoji="🤯" aria-pressed="false"><span class="e">🤯</span><span class="n">0</span><span class="t">Sorprendente</span></button>
+      <button type="button" class="reac" data-campo="corazon" data-emoji="❤️" aria-pressed="false"><span class="e">❤️</span><span class="n">0</span><span class="t">Me encantó</span></button>
+      <button type="button" class="reac" data-campo="idea" data-emoji="💡" aria-pressed="false"><span class="e">💡</span><span class="n">0</span><span class="t">Aprendí algo</span></button>
+    </div>
+  </div>
+
   <nav class="controles" aria-label="Controles de la revista">
     <button id="prev" class="btn" aria-label="Página anterior">‹</button>
     <span id="contador" class="contador" aria-live="polite"></span>
@@ -94,5 +104,6 @@
   <script src="js/revista.js"></script>
   <script type="module" src="js/comentarios.js"></script>
   <script type="module" src="js/visitas.js"></script>
+  <script type="module" src="js/reacciones.js"></script>
 </body>
 </html>

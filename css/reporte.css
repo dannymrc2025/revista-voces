@@ -87,6 +87,10 @@ body { background: #8c8c8c; font-family: "Nunito Sans", system-ui, sans-serif; c
 .coms { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
 .com { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: 8px 14px; background: var(--papel); border-radius: 8px; border-left: 5px solid #D9D4C7; }
 .com p { margin: 0 0 4px; font-size: 12.5px; font-style: italic; line-height: 1.4; overflow-wrap: anywhere; }
+.ar { display: flex; flex-direction: column; gap: 2px; padding: 7px 0; border-bottom: 1px dashed #E6DEC9; min-width: 0; }
+.ar:last-child { border-bottom: 0; }
+.ar .t { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ar .e { font-size: 11.5px; color: var(--tierra); white-space: nowrap; }
 .com small { font-size: 11px; font-weight: 700; color: var(--tierra); }
 
 /* Pie y marca de agua */
