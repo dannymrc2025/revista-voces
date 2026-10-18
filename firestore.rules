@@ -64,6 +64,51 @@ service cloud.firestore {
                     || suma1('aplauso') || suma1('wow') || suma1('corazon') || suma1('idea');
     }
 
+    match /trivias/{edicion} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == "Tnr5Z6CjmMfsYnVxLjWQbE9uU513";
+    }
+
+    function grupoTrivia() {
+      return request.resource.data.grupo in ['1A', '1B', '1C', '1D', '1E', '2A', '2B', '2C', '2D', '2E', '3A', '3B', '3C', '3D', '3E'];
+    }
+
+    match /trivia_resultados/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['edicion', 'grupo', 'aciertos', 'total', 'fecha'])
+                    && request.resource.data.keys().hasAll(['edicion', 'grupo', 'aciertos', 'total', 'fecha'])
+                    && request.resource.data.edicion is string
+                    && request.resource.data.edicion.size() <= 60
+                    && grupoTrivia()
+                    && request.resource.data.aciertos is int
+                    && request.resource.data.total is int
+                    && request.resource.data.total >= 3 && request.resource.data.total <= 10
+                    && request.resource.data.aciertos >= 0
+                    && request.resource.data.aciertos <= request.resource.data.total
+                    && request.resource.data.fecha == request.time;
+      allow delete: if request.auth != null && request.auth.uid == "Tnr5Z6CjmMfsYnVxLjWQbE9uU513";
+    }
+
+    match /trivia_nombres/{id} {
+      allow read, delete: if request.auth != null && request.auth.uid == "Tnr5Z6CjmMfsYnVxLjWQbE9uU513";
+      allow create: if request.resource.data.keys().hasOnly(['edicion', 'nombre', 'grupo', 'aciertos', 'fecha', 'respuestas'])
+                    && request.resource.data.keys().hasAll(['edicion', 'nombre', 'grupo', 'aciertos', 'fecha'])
+                    && request.resource.data.edicion is string
+                    && request.resource.data.edicion.size() <= 60
+                    && request.resource.data.nombre is string
+                    && request.resource.data.nombre.size() >= 2
+                    && request.resource.data.nombre.size() <= 40
+                    && grupoTrivia()
+                    && request.resource.data.aciertos is int
+                    && request.resource.data.aciertos >= 0
+                    && request.resource.data.aciertos <= 10
+                    && request.resource.data.fecha == request.time
+                    && (!request.resource.data.keys().hasAny(['respuestas'])
+                        || (request.resource.data.respuestas is list
+                            && request.resource.data.respuestas.size() <= 10
+                            && request.resource.data.respuestas.hasOnly([0, 1, 2, 3])));
+    }
+
     match /config/{doc} {
       allow read, write: if request.auth != null && request.auth.uid == "Tnr5Z6CjmMfsYnVxLjWQbE9uU513";
     }

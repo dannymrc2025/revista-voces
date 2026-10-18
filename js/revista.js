@@ -297,6 +297,15 @@
   // Navegación
   $('prev').addEventListener('click', () => flip?.flipPrev());
   $('next').addEventListener('click', () => flip?.flipNext());
+  window.vocesIrAPagina = (pagina) => {
+    const destino = Math.max(0, Math.min(total - 1, Number(pagina) || 0));
+    if (flip) {
+      flip.turnToPage(destino);
+      actual = destino;
+      cargar(actual);
+      actualizarUI();
+    }
+  };
   document.addEventListener('keydown', (e) => {
     if (overlayAbierto) {
       if (e.key === 'Escape') cerrarLectura();

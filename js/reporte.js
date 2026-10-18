@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/fireba
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig, ADMIN_UID } from "./firebase-config.js";
+import { cargarReacciones, cargarTrivia, colorGrupo, REACC } from "./participacion-datos.js";
 
 const HTML2PDF = "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js";
 const CHART = "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/+esm";
@@ -13,7 +14,6 @@ const ROLES = { "Alumno": "#4FB3D9", "Docente": "#E3B14A", "Padre o madre de fam
 const DISP = [["movil", "Celular", "#4CAF50"], ["tablet", "Tableta", "#D4A574"], ["escritorio", "Computadora", "#6D4C41"]];
 const GRUPOS = ["1A", "1B", "1C", "1D", "1E", "2A", "2B", "2C", "2D", "2E", "3A", "3B", "3C", "3D", "3E"];
 const FONT = { family: "'Nunito Sans', sans-serif" };
-const EMOJIS = [["aplauso", "👏"], ["wow", "🤯"], ["corazon", "❤️"], ["idea", "💡"]];
 
 const $ = (id) => document.getElementById(id);
 const ed = new URLSearchParams(location.search).get("ed");
@@ -67,15 +67,17 @@ const esperarFrames = () => new Promise((ok) => requestAnimationFrame(() => requ
 const aFecha = (v) => (v?.toDate ? v.toDate() : null);
 
 async function cargarReales() {
-  const [v, c, r] = await Promise.all([
+  const [v, c, reacc, trivia] = await Promise.all([
     getDocs(query(collection(db, "visitas"), where("edicion", "==", ed))),
     getDocs(query(collection(db, "comentarios"), where("edicion", "==", ed), where("aprobado", "==", true))),
-    getDocs(query(collection(db, "reacciones"), where("edicion", "==", ed))).catch(() => ({ docs: [] }))
+    cargarReacciones(db, ed).catch(() => ({ articulos: [] })),
+    cargarTrivia(db, ed).catch(() => null)
   ]);
   return {
     visitas: v.docs.map((d) => ({ ...d.data(), fecha: aFecha(d.data().fecha) })),
     comentarios: c.docs.map((d) => ({ ...d.data(), fecha: aFecha(d.data().fecha) })),
-    reacciones: r.docs.map((d) => d.data())
+    reacciones: reacc.articulos,
+    trivia
   };
 }
 
@@ -133,13 +135,24 @@ function datosEjemplo() {
     visitas,
     comentarios,
     reacciones: [
-      { titulo: "Así funciona un robot", aplauso: 18, wow: 12, corazon: 7, idea: 15 },
-      { titulo: "Leyendas de la ceiba", aplauso: 14, wow: 6, corazon: 17, idea: 4 },
-      { titulo: "Mapa de nuestra comunidad", aplauso: 9, wow: 8, corazon: 5, idea: 10 },
-      { titulo: "Fracciones en la cocina", aplauso: 7, wow: 3, corazon: 2, idea: 11 },
-      { titulo: "Palabras mayas del día", aplauso: 6, wow: 2, corazon: 8, idea: 5 },
-      { titulo: "Reglas de convivencia", aplauso: 1, wow: 0, corazon: 1, idea: 0 }
-    ]
+      ["Así funciona un robot", "Tecnología", 18, 12, 7, 15], ["Leyendas de la ceiba", "Lenguajes", 14, 6, 17, 4],
+      ["Mapa de nuestra comunidad", "Geografía", 9, 8, 5, 10], ["Fracciones en la cocina", "Matemáticas", 7, 3, 2, 11],
+      ["Palabras mayas del día", "Lenguajes", 6, 2, 8, 5], ["Reglas de convivencia", "Prefectura", 1, 0, 1, 0]
+    ].map(([titulo, seccion, a, w, c, i]) => ({ titulo, seccion, aplauso: a, wow: w, corazon: c, idea: i, total: a + w + c + i })),
+    trivia: {
+      preguntas: [0, 1, 2, 3, 4],
+      total: 142,
+      promedio: 3.8,
+      ranking: [["2B", 48, 12], ["1A", 42, 11], ["3C", 39, 10], ["3A", 36, 10], ["1C", 33, 9], ["2E", 31, 9], ["1E", 29, 8], ["3D", 28, 8], ["2A", 27, 8], ["1B", 26, 7], ["3E", 24, 7], ["2C", 22, 7], ["1D", 21, 6], ["3B", 20, 6], ["2D", 18, 6]]
+        .map(([grupo, puntos, participantes]) => ({ grupo, puntos, participantes })),
+      dificultad: [
+        { texto: "¿Qué sensor usa el robot para evitar obstáculos?", seccion: "Tecnología", pct: 82 },
+        { texto: "¿Qué representa la ceiba para el pueblo maya?", seccion: "Lenguajes", pct: 91 },
+        { texto: "¿En qué municipio está nuestra escuela?", seccion: "Geografía", pct: 74 },
+        { texto: "¿Cuánto es 3/4 de una taza si usas la mitad?", seccion: "Matemáticas", pct: 38 },
+        { texto: "¿Qué significa «ka’an» en maya?", seccion: "Lenguajes", pct: 65 }
+      ]
+    }
   };
 }
 
@@ -197,7 +210,7 @@ function pie(n, ahora) {
   const t = h("div", "texto");
   t.append(
     h("span", "", `Reporte generado el ${ahora.toLocaleString("es-MX", { dateStyle: "long", timeStyle: "short" })} · Voces del Corazón Maya`),
-    h("span", "", `Página ${n} de 2`)
+    h("span", "", `Página ${n} de 3`)
   );
   p.append(t);
   return p;
@@ -372,25 +385,8 @@ function hoja2(d, st, ejemplo) {
     G.cuerpo.append(barras);
   }
 
-  const A = tarjetaSec("Artículos más reaccionados", C.claro, "Top 5");
-  const conReac = (d.reacciones || [])
-    .map((r) => ({ ...r, total: EMOJIS.reduce((s, [k]) => s + (r[k] || 0), 0) }))
-    .filter((r) => r.total > 0)
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5);
-  if (!conReac.length) A.cuerpo.append(vacio("👏", "Aún no hay reacciones a los artículos"));
-  else {
-    for (const r of conReac) {
-      const f = h("div", "ar");
-      f.append(
-        h("span", "t", r.titulo),
-        h("span", "e", `${EMOJIS.map(([k, e]) => `${e} ${r[k] || 0}`).join("   ")}   ·   Total ${r.total}`)
-      );
-      A.cuerpo.append(f);
-    }
-  }
-
   const K = tarjetaSec("Comentarios destacados", C.oro);
+  K.s.classList.add("ancho");
   if (!d.comentarios.length) K.cuerpo.append(vacio("✨", "Aún no hay comentarios publicados"));
   else {
     const lista = h("div", "coms");
@@ -406,8 +402,106 @@ function hoja2(d, st, ejemplo) {
     K.cuerpo.append(lista);
   }
 
-  rejilla.append(L.s, D.s, R.s, G.s, A.s, K.s);
+  rejilla.append(L.s, D.s, R.s, G.s, K.s);
   hoja.append(rejilla, pie(2, st.hoy));
+  if (ejemplo) hoja.append(marca());
+  return hoja;
+}
+
+function hoja3(d, st, ejemplo) {
+  const hoja = h("section", "hoja");
+  const cab = h("div", "cab3");
+  const tx = h("div");
+  tx.append(h("h1", "", "Participación"), h("p", "", `${edicion.titulo} · reacciones y trivia`));
+  cab.append(tx, greca(C.oro, C.bosque));
+
+  const arts = (d.reacciones || []).filter((a) => a.total > 0).sort((a, b) => b.total - a.total);
+  const totalReac = (d.reacciones || []).reduce((s, a) => s + a.total, 0);
+  const t = d.trivia && d.trivia.total > 0 ? d.trivia : null;
+  const mini = h("div", "tarjetas tres");
+  const num = (valor, etiqueta, fondo, color = "#fff") => {
+    const n = h("div", "num"); n.style.background = fondo; n.style.color = color;
+    n.append(h("strong", "", String(valor)), h("span", "", etiqueta)); return n;
+  };
+  mini.append(
+    num(totalReac, "Reacciones", C.bosque),
+    num(t ? t.total : 0, "Participantes de la trivia", C.verde),
+    num(t ? `${t.promedio.toFixed(1)} de ${t.preguntas.length}` : "—", "Promedio de aciertos", C.claro, C.bosque)
+  );
+
+  const R = tarjetaSec("Artículos más reaccionados", C.claro, "Top 5");
+  R.s.style.height = "236px";
+  if (!arts.length) R.cuerpo.append(vacio("👏", "Aún no hay reacciones. ¡Pronto llegarán los primeros aplausos!"));
+  else {
+    const top = arts.slice(0, 5);
+    const max = top[0].total;
+    top.forEach((a, i) => {
+      const f = h("div", "r3");
+      const nombre = h("div", "n");
+      nombre.append(h("span", "t", a.titulo));
+      if (i === 0) nombre.append(h("em", "", "⭐ Favorito de los lectores"));
+      const pista = h("div", "p");
+      const barra = h("div", "s"); barra.style.width = `${(a.total / max) * 100}%`;
+      REACC.forEach(([k, , color]) => {
+        if (!a[k]) return;
+        const seg = h("div"); seg.style.flex = String(a[k]); seg.style.background = color; barra.append(seg);
+      });
+      pista.append(barra);
+      f.append(nombre, pista, h("b", "", String(a.total)));
+      R.cuerpo.append(f);
+    });
+    const ley = h("div", "ley3");
+    REACC.forEach(([, e, color]) => { const s = h("span", "", ` ${e}`); const i = h("i"); i.style.background = color; s.prepend(i); ley.append(s); });
+    R.cuerpo.append(ley);
+  }
+
+  const T = tarjetaSec("Trivia", C.oro, "Ranking por grupo");
+  T.s.style.height = "268px";
+  if (!t) T.cuerpo.append(vacio("🏆", "Aún no hay participación en la trivia de esta edición. ¡Pronto habrá resultados!"));
+  else {
+    const g3 = h("div", "tr3");
+    const top = t.ranking.filter((f) => f.participantes > 0).slice(0, 3);
+    const podio = h("div", "podio3");
+    [1, 0, 2].filter((i) => top[i]).forEach((i) => {
+      const f = top[i];
+      const e = h("div", "e");
+      const bloque = h("div", "b"); bloque.style.height = `${[96, 70, 50][i]}px`; bloque.style.background = colorGrupo(f.grupo);
+      bloque.textContent = String(i + 1);
+      e.append(h("span", "m", ["🥇", "🥈", "🥉"][i]), h("strong", "", f.grupo), h("small", "", `${f.puntos} pts`), bloque);
+      podio.append(e);
+    });
+    const maxP = Math.max(1, ...t.ranking.map((f) => f.puntos));
+    const barras = h("div", "grupos g3");
+    [...t.ranking].sort((a, b) => a.grupo.localeCompare(b.grupo)).forEach((f) => {
+      const col = h("div", "g"); const b = h("div");
+      b.style.height = `${Math.max(3, (f.puntos / maxP) * 130)}px`; b.style.background = f.puntos ? colorGrupo(f.grupo) : C.gris;
+      col.append(h("b", "", String(f.puntos)), b, h("span", "", f.grupo)); barras.append(col);
+    });
+    g3.append(podio, barras);
+    T.cuerpo.append(g3);
+  }
+
+  const Q = tarjetaSec("Dificultad de las preguntas", C.tierraClara, "% de acierto");
+  Q.s.style.flex = "1"; Q.s.style.minHeight = "0";
+  if (!t || !t.dificultad.length) Q.cuerpo.append(vacio("🧩", t ? "Sin datos por pregunta todavía" : "Cuando haya participantes, aquí verás qué preguntas fueron más difíciles."));
+  else {
+    const min = Math.min(...t.dificultad.map((x) => x.pct));
+    const max = Math.max(...t.dificultad.map((x) => x.pct));
+    t.dificultad.forEach((x, i) => {
+      const f = h("div", "q3");
+      const b = h("div", "b"); const r = h("div"); r.style.width = `${x.pct}%`;
+      r.style.background = min !== max && x.pct === min ? "#E07A5F" : min !== max && x.pct === max ? "#4CAF50" : C.tierraClara;
+      b.append(r);
+      f.append(h("span", "n", `${i + 1}. ${x.texto}`), b, h("span", "v", `${x.pct} %`));
+      Q.cuerpo.append(f);
+    });
+    const dificil = t.dificultad.reduce((a, x) => (x.pct < a.pct ? x : a));
+    const facil = t.dificultad.reduce((a, x) => (x.pct > a.pct ? x : a));
+    const quien = (x) => (x.seccion ? `la de ${x.seccion}` : `la ${t.dificultad.indexOf(x) + 1}`);
+    if (dificil !== facil) Q.cuerpo.append(h("p", "frase3", `La pregunta más difícil fue ${quien(dificil)}: solo el ${dificil.pct} % acertó. La más fácil fue ${quien(facil)}: el ${facil.pct} % acertó.`));
+  }
+
+  hoja.append(cab, mini, R.s, T.s, Q.s, pie(3, st.hoy));
   if (ejemplo) hoja.append(marca());
   return hoja;
 }
@@ -419,7 +513,7 @@ function pintar() {
   const ejemplo = $("ejemplo").checked;
   const d = ejemplo ? datosEjemplo() : reales;
   const st = estadisticas(d, new Date());
-  $("hojas").replaceChildren(hoja1(d, st, ejemplo), hoja2(d, st, ejemplo));
+  $("hojas").replaceChildren(hoja1(d, st, ejemplo), hoja2(d, st, ejemplo), hoja3(d, st, ejemplo));
   pend.forEach((f) => f());
   ajustarEscala();
 }

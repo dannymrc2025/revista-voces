@@ -39,6 +39,7 @@
     <button id="next" class="btn" aria-label="Página siguiente">›</button>
     <button id="leer" class="btn" aria-label="Leer página ampliada">🔍 Leer</button>
     <button id="compartir" class="btn">Compartir</button>
+    <button id="btn-trivia" class="btn" type="button" hidden>🏆 Trivia</button>
   </nav>
   <p class="aviso-visitas aviso-visor">Contamos visitas de forma anónima (sin datos personales).</p>
   <div id="ayuda-leer" class="ayuda-leer" role="status" hidden>Toca 🔍 o dos veces la página para leer más grande</div>
@@ -100,10 +101,28 @@
     </div>
   </section>
 
+  <section id="panel-trivia" class="panel-trivia" role="dialog" aria-modal="true" aria-label="Trivia" aria-hidden="true" hidden>
+    <div class="panel-trivia-caja">
+      <div class="panel-cab"><h2>Trivia</h2><button id="trivia-cerrar" class="btn" type="button">Cerrar</button></div>
+      <div class="panel-trivia-cuerpo">
+        <div id="trivia-pantalla"></div>
+        <section id="trivia-ranking" class="trivia-ranking" aria-label="Ranking por grupo" hidden></section>
+      </div>
+    </div>
+  </section>
+
   <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
   <script src="js/revista.js"></script>
   <script type="module" src="js/comentarios.js"></script>
   <script type="module" src="js/visitas.js"></script>
   <script type="module" src="js/reacciones.js"></script>
+  <script type="module">
+    import { iniciarTrivia } from "./js/trivia.js";
+    const ed = new URLSearchParams(location.search).get("ed");
+    if (ed && /^[\w.-]+$/.test(ed)) {
+      // Inicializa la UI; el módulo comprueba también que la trivia esté activa.
+      iniciarTrivia(ed);
+    }
+  </script>
 </body>
 </html>

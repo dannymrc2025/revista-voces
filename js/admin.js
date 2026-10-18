@@ -10,6 +10,8 @@ import { iniciarPublicar, detenerPublicar, alternarVisible, eliminarEdicion } fr
 import { GRUPOS, claseRol, etiquetaRol } from "./roles.js";
 import { iniciarEstadisticas, abrirEstadisticas, detenerEstadisticas } from "./estadisticas.js";
 import { iniciarArticulos, detenerArticulos, abrirEditorArticulos } from "./articulos.js";
+import { iniciarTriviaAdmin, detenerTriviaAdmin, abrirEditorTrivia } from "./trivia-admin.js";
+import { iniciarParticipacion, detenerParticipacion } from "./estadisticas-participacion.js";
 
 const $ = (id) => document.getElementById(id);
 const app = initializeApp(firebaseConfig);
@@ -118,6 +120,7 @@ function pintarEdiciones() {
     const acc = el("div", "acciones conf");
     const normal = () => acc.replaceChildren(
       boton("Artículos", "", () => abrirEditorArticulos(e)),
+      boton("Trivia", "", () => abrirEditorTrivia(e)),
       boton(oculta ? "Mostrar" : "Ocultar", "", () => operar(() => alternarVisible(e.id))),
       boton("Eliminar", "peligro", confirmar)
     );
@@ -265,12 +268,16 @@ onAuthStateChanged(auth, async (user) => {
   detenerPublicar();
   detenerEstadisticas();
   detenerArticulos();
+  detenerTriviaAdmin();
+  detenerParticipacion();
   if (dentro) {
     $("form-login").reset();
     await cargarEdiciones();
     iniciarPublicar({ db, getEdiciones: () => ediciones, onCambio: aplicarEdiciones });
     iniciarArticulos({ db });
     iniciarEstadisticas({ db, getEdiciones: () => ediciones, getPublicados: () => publicados });
+    iniciarTriviaAdmin({ db });
+    iniciarParticipacion({ db });
     escuchar();
   }
 });

@@ -1,6 +1,7 @@
 import {
   collection, query, where, getDocs, getCountFromServer, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { cargarParticipacion } from "./estadisticas-participacion.js";
 
 const $ = (id) => document.getElementById(id);
 const NO_CONTAR = "revista-no-contar";
@@ -171,39 +172,11 @@ function pintarDispositivos(disp, total) {
   }));
 }
 
-const REACCIONES = [["aplauso", "👏"], ["wow", "🤯"], ["corazon", "❤️"], ["idea", "💡"]];
-
-async function pintarReacciones(id) {
-  const cont = $("est-reacc");
-  cont.replaceChildren(el("p", "vacio", "Cargando…"));
-  try {
-    const snap = await getDocs(query(collection(db, "reacciones"), where("edicion", "==", id)));
-    if (seleccion !== id) return;
-    const filas = snap.docs.map((d) => d.data()).map((r) => ({
-      ...r, total: REACCIONES.reduce((s, [c]) => s + (r[c] || 0), 0)
-    })).sort((a, b) => b.total - a.total);
-    if (!filas.length) { cont.replaceChildren(el("p", "vacio", "Esta edición no tiene artículos con reacciones.")); return; }
-    if (!filas[0].total) { cont.replaceChildren(el("p", "vacio", "Aún no hay reacciones.")); return; }
-    cont.replaceChildren(...filas.map((r, i) => {
-      const f = el("div", i === 0 ? "reac-fila top" : "reac-fila");
-      if (i === 0) f.append(el("em", "", "⭐ Más reaccionado"));
-      f.append(
-        el("strong", "", r.titulo),
-        el("span", "", `${REACCIONES.map(([c, e]) => `${e} ${r[c] || 0}`).join("  ·  ")}  —  Total ${r.total}`)
-      );
-      return f;
-    }));
-  } catch (e) {
-    console.warn("Reacciones:", e.code || e.message);
-    cont.replaceChildren(el("p", "vacio", "No se pudieron cargar las reacciones."));
-  }
-}
-
 async function cargarEdicion(id) {
   seleccion = id;
   if (!id) return;
   $("est-detalle-msg").textContent = "Cargando…";
-  pintarReacciones(id);
+  cargarParticipacion(id);
   try {
     const snap = await getDocs(query(collection(db, "visitas"), where("edicion", "==", id)));
     if (seleccion !== id) return;

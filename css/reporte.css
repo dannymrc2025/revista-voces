@@ -99,3 +99,36 @@ body { background: #8c8c8c; font-family: "Nunito Sans", system-ui, sans-serif; c
 .pie .texto { position: absolute; left: 48px; right: 48px; top: 18px; display: flex; justify-content: space-between; font-size: 10px; color: var(--tierra); }
 .marca { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; pointer-events: none; overflow: hidden; }
 .marca span { transform: rotate(-30deg); white-space: nowrap; font: 700 62px "Cinzel", Georgia, serif; letter-spacing: 4px; color: rgba(13, 59, 43, .13); }
+
+/* Hoja 3 */
+.cab3 { position: relative; flex: none; margin: -48px -48px 0; height: 84px; padding: 22px 48px 0; background: var(--bosque); color: #fff; }
+.cab3 h1 { font-size: 26px; color: var(--oro); }
+.cab3 p { margin: 4px 0 0; font-size: 12px; opacity: .93; }
+.cab3 .franja { position: absolute; left: 0; right: 0; bottom: 0; height: 14px; }
+.tarjetas.tres { grid-template-columns: repeat(3, 1fr); }
+.tarjetas.tres .num { height: 64px; }
+.tarjetas.tres .num strong { font-size: 26px; }
+.tarjetas.tres .num span { margin-top: 2px; font-size: 11px; }
+.r3 { display: flex; align-items: center; gap: 10px; height: 30px; }
+.r3 .n { width: 210px; flex: none; min-width: 0; display: flex; flex-direction: column; line-height: 1.15; }
+.r3 .t { font-size: 11.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.r3 em { font-style: normal; font-size: 9px; font-weight: 700; color: var(--tierra); }
+.r3 .p { flex: 1; height: 14px; background: #EFE8D8; border-radius: 7px; overflow: hidden; }
+.r3 .s { height: 100%; display: flex; border-radius: 7px; overflow: hidden; }
+.r3 b { width: 28px; text-align: right; font-size: 12px; flex: none; }
+.ley3 { margin-top: auto; display: flex; gap: 16px; justify-content: center; font-size: 12px; }
+.ley3 i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 2px; }
+.tr3 { flex: 1; min-height: 0; display: grid; grid-template-columns: 250px 1fr; gap: 14px; }
+.podio3 { display: flex; align-items: flex-end; justify-content: center; gap: 6px; }
+.podio3 .e { width: 74px; display: flex; flex-direction: column; align-items: center; font-size: 11px; }
+.podio3 .m { font-size: 24px; line-height: 1.1; }
+.podio3 strong { font-size: 15px; }
+.podio3 small { font-size: 10.5px; color: var(--tierra); margin-bottom: 3px; }
+.podio3 .b { width: 100%; border-radius: 6px 6px 0 0; display: flex; align-items: center; justify-content: center; color: #fff; font: 700 20px "Cinzel", Georgia, serif; }
+.grupos.g3 .g { font-size: 8.5px; }
+.q3 { display: flex; align-items: center; gap: 8px; height: 19px; font-size: 11px; }
+.q3 .n { width: 300px; flex: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q3 .b { flex: 1; height: 10px; background: #EFE8D8; border-radius: 5px; overflow: hidden; }
+.q3 .b div { height: 100%; border-radius: 5px; }
+.q3 .v { width: 38px; text-align: right; font-weight: 700; flex: none; }
+.frase3 { margin: auto 0 0; padding-top: 4px; font-size: 11.5px; font-weight: 700; color: var(--bosque); }
