@@ -4,7 +4,6 @@ import { getFirestore, collection, query, where, getDocs } from "https://www.gst
 import { firebaseConfig, ADMIN_UID } from "./firebase-config.js";
 import { cargarReacciones, cargarTrivia, colorGrupo, REACC } from "./participacion-datos.js";
 
-const HTML2PDF = "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js";
 const CHART = "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/+esm";
 const C = {
   papel: "#FBF7EF", texto: "#2B2B2B", bosque: "#0D3B2B", verde: "#1B5E20", claro: "#4CAF50",
@@ -49,16 +48,6 @@ function greca(color, fondo) {
   const d = h("div", "franja");
   d.innerHTML = `<svg class="greca" viewBox="0 0 816 14" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="${id}" width="28" height="14" patternUnits="userSpaceOnUse"><path d="M0 12V7h7V2h14v5h7v5" fill="none" stroke="${color}" stroke-width="2"/></pattern></defs><rect width="816" height="14" fill="${fondo}"/><rect width="816" height="14" fill="url(#${id})"/></svg>`;
   return d;
-}
-
-function cargarScript(url) {
-  return new Promise((ok, fallo) => {
-    const s = document.createElement("script");
-    s.src = url;
-    s.onload = ok;
-    s.onerror = () => fallo(new Error("No se pudo cargar html2pdf"));
-    document.head.append(s);
-  });
 }
 
 const esperarFrames = () => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)));
@@ -534,30 +523,32 @@ async function descargar() {
   const cont = $("hojas");
   btn.disabled = true;
   btn.textContent = "Generando…";
-  msg("");
-  try {
-    if (!window.html2pdf) await cargarScript(HTML2PDF);
-    window.scrollTo(0, 0);
-    cont.classList.add("pdf");
-    await document.fonts.ready;
-    await Promise.all([...cont.querySelectorAll("img")].map((i) => (i.complete ? null : new Promise((ok) => { i.onload = ok; i.onerror = ok; }))));
-    await esperarFrames();
-    const nombre = $("ejemplo").checked ? "Reporte-EJEMPLO.pdf" : `Reporte-${edicion.id}.pdf`;
-    await window.html2pdf().set({
-      margin: 0,
-      filename: nombre,
-      image: { type: "jpeg", quality: 0.95 },
-      html2canvas: { scale: 2, scrollX: 0, scrollY: 0, windowWidth: 816, useCORS: true, backgroundColor: C.papel },
-      jsPDF: { unit: "px", format: [816, 1056], orientation: "portrait", hotfixes: ["px_scaling"] },
-      pagebreak: { mode: ["css"], before: ".hoja + .hoja" }
-    }).from(cont).save();
-  } catch (e) {
-    console.warn("Reporte PDF:", e.message);
-    msg("No se pudo generar el PDF. Inténtalo de nuevo.");
-  } finally {
-    cont.classList.remove("pdf");
+  msg("En el diálogo de impresión, selecciona «Guardar como PDF».");
+  const tituloAnterior = document.title;
+  const restaurar = () => {
+    document.title = tituloAnterior;
     btn.disabled = false;
     btn.textContent = "Descargar PDF";
+  };
+  try {
+    await document.fonts.ready;
+    await Promise.all([...cont.querySelectorAll("img")].map(async (img) => {
+      if (!img.complete) await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = () => reject(new Error("No se pudo cargar la portada de la edición."));
+      });
+      if (!img.naturalWidth) throw new Error("No se pudo cargar la portada de la edición.");
+      if (img.decode) await img.decode();
+    }));
+    await esperarFrames();
+    document.title = $("ejemplo").checked ? "Reporte-EJEMPLO" : `Reporte-${edicion.id}`;
+    window.addEventListener("afterprint", restaurar, { once: true });
+    window.print();
+  } catch (e) {
+    window.removeEventListener("afterprint", restaurar);
+    console.warn("Reporte PDF:", e.message);
+    msg(e.message || "No se pudo preparar el PDF. Inténtalo de nuevo.");
+    restaurar();
   }
 }
 

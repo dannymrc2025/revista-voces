@@ -26,9 +26,6 @@ body { background: #8c8c8c; font-family: "Nunito Sans", system-ui, sans-serif; c
 .vista { padding-top: 56px; overflow-x: hidden; }
 .escala { width: 816px; transform-origin: top left; padding: 24px 0; }
 .hojas { width: 816px; display: flex; flex-direction: column; gap: 24px; }
-.hojas.pdf { display: block; }
-.hojas.pdf .hoja { box-shadow: none; }
-.hojas.pdf .hoja + .hoja { margin-top: 0; }
 
 /* Hoja carta */
 .hoja {
@@ -132,3 +129,19 @@ body { background: #8c8c8c; font-family: "Nunito Sans", system-ui, sans-serif; c
 .q3 .b div { height: 100%; border-radius: 5px; }
 .q3 .v { width: 38px; text-align: right; font-weight: 700; flex: none; }
 .frase3 { margin: auto 0 0; padding-top: 4px; font-size: 11.5px; font-weight: 700; color: var(--bosque); }
+
+@page { size: letter; margin: 0; }
+@media print {
+  html, body { width: 8.5in; margin: 0 !important; background: var(--papel) !important; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .barra-sup { display: none !important; }
+  .vista { height: auto !important; padding: 0 !important; overflow: visible !important; }
+  .escala { width: 816px !important; margin: 0 !important; padding: 0 !important; transform: none !important; }
+  .hojas { display: block !important; width: 816px !important; }
+  .hoja {
+    width: 8.5in; height: 11in; margin: 0; overflow: hidden; box-shadow: none;
+    break-after: page; page-break-after: always;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .hoja:last-child { break-after: auto; page-break-after: auto; }
+}
