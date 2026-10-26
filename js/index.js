@@ -9,6 +9,32 @@
       return;
     }
     for (const e of ediciones.filter((x) => x.visible !== false)) {
+      if (e.estado === 'proximamente') {
+        const tarjeta = document.createElement('article');
+        tarjeta.className = 'tarjeta tarjeta-proximamente';
+        tarjeta.setAttribute('aria-label', `${e.titulo}, ${e.fecha}. Próximamente`);
+
+        const portada = document.createElement('div');
+        portada.className = 'portada-proximamente';
+        portada.setAttribute('aria-hidden', 'true');
+        const marca = document.createElement('span');
+        marca.textContent = 'Voces del Corazón Maya';
+        const numero = document.createElement('strong');
+        numero.textContent = '#2';
+        const sello = document.createElement('span');
+        sello.className = 'sello-proximamente';
+        sello.textContent = 'Próximamente';
+        portada.append(marca, numero, sello);
+
+        const t = document.createElement('strong');
+        t.textContent = e.titulo;
+        const f = document.createElement('span');
+        f.textContent = e.fecha;
+        tarjeta.append(portada, t, f);
+        lista.append(tarjeta);
+        continue;
+      }
+
       const a = document.createElement('a');
       a.className = 'tarjeta';
       a.href = `revista.html?ed=${encodeURIComponent(e.id)}`;
