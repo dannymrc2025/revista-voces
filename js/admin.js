@@ -10,7 +10,7 @@ import { iniciarPublicar, detenerPublicar, alternarVisible, eliminarEdicion } fr
 import { GRUPOS, claseRol, etiquetaRol } from "./roles.js";
 import { iniciarEstadisticas, abrirEstadisticas, detenerEstadisticas } from "./estadisticas.js";
 import { iniciarArticulos, detenerArticulos, abrirEditorArticulos } from "./articulos.js";
-import { iniciarTriviaAdmin, detenerTriviaAdmin, abrirEditorTrivia } from "./trivia-admin.js";
+import { iniciarTriviaAdmin, detenerTriviaAdmin, abrirEditorTrivia } from "./trivia-admin.js?v=20261105-2";
 import { iniciarParticipacion, detenerParticipacion } from "./estadisticas-participacion.js";
 
 const $ = (id) => document.getElementById(id);

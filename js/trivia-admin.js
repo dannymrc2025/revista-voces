@@ -64,16 +64,14 @@ function pintarEditor(activa = false, mensaje = "") {
       if (estado) { estado.textContent = err.message; estado.classList.add("error"); }
     }
   });
-  const etiquetaImportar = h("label", "btn", "Importar Markdown");
-  etiquetaImportar.append(importar);
+  const botonImportar = boton("Importar archivo .md", () => importar.click());
   acciones.append(
-    etiquetaImportar,
     boton("+ Agregar pregunta", () => { if (preguntas.length >= 10) return; preguntas.push({ texto: "", opciones: ["", "", "", ""], correcta: 0, articuloId: "" }); pintarEditor(activar.checked); }, ""),
     boton("Vista previa", () => { vistaPrevia = true; pintarEditor(activar.checked); }, ""),
     boton("Guardar", () => guardarTrivia(activar.checked, msg), "primario")
   );
   const msg = h("p", "nota", mensaje); msg.setAttribute("role", "status");
-  cont.replaceChildren(cab, activarLabel, lista, acciones, msg);
+  cont.replaceChildren(cab, activarLabel, importar, botonImportar, lista, acciones, msg);
   if (vistaPrevia) cont.append(pintarVistaPrevia(() => { vistaPrevia = false; pintarEditor(activar.checked); }));
 }
 
