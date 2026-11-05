@@ -1,5 +1,5 @@
 import {
-  collection, doc, getDoc, getDocs, getAggregateFromServer, query, where, sum, count
+  collection, doc, getDoc, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 export const GRUPOS = ["1A", "1B", "1C", "1D", "1E", "2A", "2B", "2C", "2D", "2E", "3A", "3B", "3C", "3D", "3E"];
@@ -30,21 +30,20 @@ export async function cargarReacciones(db, ed) {
   return { articulos, lista };
 }
 
-// Devuelve null si la edición no tiene trivia activa. "participantes" trae nombres: no mostrarlos en el reporte.
+// Los nombres solo se consultan desde el panel de administración; no incluirlos en reportes públicos.
 export async function cargarTrivia(db, ed) {
   const s = await getDoc(doc(db, "trivias", ed));
-  if (!s.exists() || !s.data().activa) return null;
-  const preguntas = s.data().preguntas || [];
+  if (!s.exists()) return null;
+  const preguntas = Array.isArray(s.data().preguntas) ? s.data().preguntas : [];
   const lista = ((await getDoc(doc(db, "articulos", ed))).data()?.lista) || [];
-  const [ranking, nombres] = await Promise.all([
-    Promise.all(GRUPOS.map(async (grupo) => {
-      const q = query(collection(db, "trivia_resultados"), where("edicion", "==", ed), where("grupo", "==", grupo));
-      const d = (await getAggregateFromServer(q, { puntos: sum("aciertos"), participantes: count() })).data();
-      return { grupo, puntos: d.puntos || 0, participantes: d.participantes || 0 };
-    })),
-    getDocs(query(collection(db, "trivia_nombres"), where("edicion", "==", ed)))
-  ]);
+  const nombres = await getDocs(query(collection(db, "trivia_nombres"), where("edicion", "==", ed)));
   const part = nombres.docs.map((d) => ({ ...d.data(), fecha: d.data().fecha?.toDate?.() || null }));
+  const porGrupo = new Map(GRUPOS.map((grupo) => [grupo, { grupo, puntos: 0, participantes: 0 }]));
+  part.forEach((p) => {
+    const fila = porGrupo.get(p.grupo);
+    if (fila) { fila.puntos += p.aciertos || 0; fila.participantes++; }
+  });
+  const ranking = ordenarRanking([...porGrupo.values()]);
   const n = part.length;
   const perfectos = part.filter((p) => p.aciertos === preguntas.length).length;
   const conResp = part.filter((p) => Array.isArray(p.respuestas) && p.respuestas.length === preguntas.length);
@@ -55,7 +54,8 @@ export async function cargarTrivia(db, ed) {
   }) : [];
   return {
     preguntas,
-    ranking: ordenarRanking(ranking),
+    activa: !!s.data().activa,
+    ranking,
     participantes: part,
     total: n,
     promedio: n ? part.reduce((s, p) => s + (p.aciertos || 0), 0) / n : 0,

@@ -8,10 +8,10 @@ import {
 import { firebaseConfig, ADMIN_UID } from "./firebase-config.js";
 import { iniciarPublicar, detenerPublicar, alternarVisible, eliminarEdicion } from "./publicar.js";
 import { GRUPOS, claseRol, etiquetaRol } from "./roles.js";
-import { iniciarEstadisticas, abrirEstadisticas, detenerEstadisticas } from "./estadisticas.js";
+import { iniciarEstadisticas, abrirEstadisticas, detenerEstadisticas } from "./estadisticas.js?v=20261105-3";
 import { iniciarArticulos, detenerArticulos, abrirEditorArticulos } from "./articulos.js";
 import { iniciarTriviaAdmin, detenerTriviaAdmin, abrirEditorTrivia } from "./trivia-admin.js?v=20261105-2";
-import { iniciarParticipacion, detenerParticipacion } from "./estadisticas-participacion.js";
+import { iniciarParticipacion, detenerParticipacion } from "./estadisticas-participacion.js?v=20261105-3";
 
 const $ = (id) => document.getElementById(id);
 const app = initializeApp(firebaseConfig);

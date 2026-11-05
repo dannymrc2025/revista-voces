@@ -1,7 +1,7 @@
 import {
   collection, query, where, getDocs, getCountFromServer, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { cargarParticipacion } from "./estadisticas-participacion.js";
+import { cargarParticipacion } from "./estadisticas-participacion.js?v=20261105-3";
 
 const $ = (id) => document.getElementById(id);
 const NO_CONTAR = "revista-no-contar";

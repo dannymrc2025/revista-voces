@@ -1,4 +1,4 @@
-import { GRUPOS, COLOR_GRADO, colorGrupo, REACC, cargarReacciones, cargarTrivia } from "./participacion-datos.js";
+import { GRUPOS, COLOR_GRADO, colorGrupo, REACC, cargarReacciones, cargarTrivia } from "./participacion-datos.js?v=20261105-3";
 
 const $ = (id) => document.getElementById(id);
 const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
@@ -169,7 +169,8 @@ async function pintarTrivia(id, Chart) {
   const zona = h("div"); filtro.addEventListener("change", () => pintarLista(zona));
   lista.append(filtro, zona);
 
-  host.replaceChildren(stats, bloque("Ranking por grupo", podio(t.ranking), rank), bloque("Participantes por grado", lienzoGrado), bloque("Dificultad de las preguntas", dif), bloque("Lista de participantes", lista));
+  const estado = t.activa ? null : h("p", "nota", "Trivia desactivada. Se muestran los resultados guardados.");
+  host.replaceChildren(...(estado ? [estado] : []), stats, bloque("Ranking por grupo", podio(t.ranking), rank), bloque("Participantes por grado", lienzoGrado), bloque("Dificultad de las preguntas", dif), bloque("Lista de participantes", lista));
   pintarLista(zona);
   charts.push(new Chart(cg, {
     type: "bar",
