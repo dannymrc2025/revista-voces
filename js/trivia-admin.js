@@ -45,7 +45,29 @@ function pintarEditor(activa = false, mensaje = "") {
   const lista = h("div", "trivia-editor-lista");
   preguntas.forEach((p, i) => lista.append(filaPregunta(p, i)));
   const acciones = h("div", "acciones");
+  const importar = document.createElement("input");
+  importar.type = "file"; importar.accept = ".md,text/markdown"; importar.hidden = true;
+  importar.setAttribute("aria-label", "Importar trivia desde Markdown");
+  importar.addEventListener("change", async () => {
+    const archivo = importar.files?.[0];
+    if (!archivo) return;
+    try {
+      const cargadas = parsearMarkdown(await archivo.text());
+      preguntas = cargadas.map((p) => ({
+        ...p,
+        articuloId: articulos.find((a) => normalizar(a.titulo) === normalizar(p.tituloArticulo))?.id || ""
+      }));
+      vistaPrevia = false;
+      pintarEditor(activar.checked, `Se importaron ${preguntas.length} preguntas. Revisa y guarda la trivia.`);
+    } catch (err) {
+      const estado = cont.querySelector('[role="status"]');
+      if (estado) { estado.textContent = err.message; estado.classList.add("error"); }
+    }
+  });
+  const etiquetaImportar = h("label", "btn", "Importar Markdown");
+  etiquetaImportar.append(importar);
   acciones.append(
+    etiquetaImportar,
     boton("+ Agregar pregunta", () => { if (preguntas.length >= 10) return; preguntas.push({ texto: "", opciones: ["", "", "", ""], correcta: 0, articuloId: "" }); pintarEditor(activar.checked); }, ""),
     boton("Vista previa", () => { vistaPrevia = true; pintarEditor(activar.checked); }, ""),
     boton("Guardar", () => guardarTrivia(activar.checked, msg), "primario")
@@ -53,6 +75,39 @@ function pintarEditor(activa = false, mensaje = "") {
   const msg = h("p", "nota", mensaje); msg.setAttribute("role", "status");
   cont.replaceChildren(cab, activarLabel, lista, acciones, msg);
   if (vistaPrevia) cont.append(pintarVistaPrevia(() => { vistaPrevia = false; pintarEditor(activar.checked); }));
+}
+
+function normalizar(texto = "") {
+  return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function parsearMarkdown(markdown) {
+  const lineas = markdown.replace(/\r/g, "").split("\n");
+  const inicios = lineas.flatMap((linea, i) => /^##\s+\d+\.\s+/.test(linea) ? [i] : []);
+  if (inicios.length < 3 || inicios.length > 10) throw new Error("El Markdown debe contener entre 3 y 10 preguntas con encabezados ## 1., ## 2., etc.");
+
+  return inicios.map((inicio, indice) => {
+    const fin = inicios[indice + 1] ?? lineas.length;
+    const encabezado = lineas[inicio].replace(/^##\s+\d+\.\s+/, "").trim();
+    const dosPuntos = encabezado.indexOf(":");
+    const tituloArticulo = dosPuntos >= 0 ? encabezado.slice(dosPuntos + 1).trim().replace(/^['"“”‘’]|['"“”‘’]$/g, "") : "";
+    let texto = "";
+    const opciones = [];
+    for (const linea of lineas.slice(inicio + 1, fin)) {
+      const opcion = linea.match(/^\s*[-*]\s*[a-dA-D]\)\s*(.*?)\s*$/);
+      if (opcion) {
+        const marcada = /✅|✔|✓/.test(opcion[1]);
+        opciones.push({ texto: opcion[1].replace(/\s*(✅|✔|✓)\s*/g, "").trim(), marcada });
+      } else if (!opciones.length && linea.trim() && !/^[-*_]{3,}$/.test(linea.trim())) {
+        texto = texto ? `${texto} ${linea.trim()}` : linea.trim();
+      }
+    }
+    if (!texto) throw new Error(`Falta el enunciado de la pregunta ${indice + 1}.`);
+    if (opciones.length !== 4 || opciones.some((o) => !o.texto)) throw new Error(`La pregunta ${indice + 1} debe tener exactamente cuatro opciones completas.`);
+    const correctas = opciones.flatMap((o, i) => o.marcada ? [i] : []);
+    if (correctas.length !== 1) throw new Error(`La pregunta ${indice + 1} debe señalar una sola respuesta correcta con ✅, ✔ o ✓.`);
+    return { texto, opciones: opciones.map((o) => o.texto), correcta: correctas[0], tituloArticulo };
+  });
 }
 
 function filaPregunta(p, i) {

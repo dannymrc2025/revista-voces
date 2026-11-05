@@ -1,0 +1,60 @@
+{
+  "activa": false,
+  "preguntas": [
+    {
+      "texto": "Según el artículo, ¿con qué se compara la lectura porque ‘hay géneros para todos los gustos’?",
+      "opciones": [
+        "Con los videojuegos",
+        "Con la música",
+        "Con el cine",
+        "Con las redes sociales"
+      ],
+      "correcta": 1,
+      "articuloId": ""
+    },
+    {
+      "texto": "En el pib, ¿qué función cumple la tierra que se coloca encima?",
+      "opciones": [
+        "Conduce el calor hacia la comida",
+        "Produce energía química",
+        "Funciona como aislante térmico, para que el calor no escape",
+        "Hace que el agua de las hojas se evapore"
+      ],
+      "correcta": 2,
+      "articuloId": ""
+    },
+    {
+      "texto": "Según el artículo, ¿cuál de estos datos es cierto?",
+      "opciones": [
+        "El inglés es el idioma con más hablantes nativos del mundo",
+        "El inglés es el idioma más utilizado en Internet",
+        "El inglés solo se habla en Estados Unidos e Inglaterra",
+        "Las becas internacionales no piden inglés"
+      ],
+      "correcta": 1,
+      "articuloId": ""
+    },
+    {
+      "texto": "¿Qué fecha se recuerda por la creación oficial del Territorio de Quintana Roo?",
+      "opciones": [
+        "8 de octubre",
+        "16 de septiembre",
+        "24 de noviembre",
+        "2 de noviembre"
+      ],
+      "correcta": 2,
+      "articuloId": ""
+    },
+    {
+      "texto": "¿Cuáles son los tres filtros que propone Sócrates antes de hablar de alguien?",
+      "opciones": [
+        "¿Es divertido? ¿Es nuevo? ¿Es secreto?",
+        "¿Es verdadero? ¿Es bueno? ¿Es útil?",
+        "¿Es rápido? ¿Es corto? ¿Es claro?",
+        "¿Es importante? ¿Es urgente? ¿Es público?"
+      ],
+      "correcta": 1,
+      "articuloId": ""
+    }
+  ]
+}
