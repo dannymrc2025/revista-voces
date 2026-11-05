@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {
-  getFirestore, collection, doc, getDoc, getAggregateFromServer, query, where, sum, count,
+  getFirestore, collection, doc, getDoc, getDocs, query, where,
   writeBatch, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
@@ -38,12 +38,14 @@ function gruposPorGrado() {
 async function ranking() {
   const guardado = leerLocal(claveRanking(edicion));
   if (guardado && Date.now() - guardado.t < 600000 && Array.isArray(guardado.filas)) return guardado.filas;
-  const filas = await Promise.all(GRUPOS.map(async (grupo) => {
-    const q = query(collection(db, "trivia_resultados"), where("edicion", "==", edicion), where("grupo", "==", grupo));
-    const r = await getAggregateFromServer(q, { puntos: sum("aciertos"), participantes: count() });
-    const d = r.data();
-    return { grupo, puntos: d.puntos || 0, participantes: d.participantes || 0 };
-  }));
+  const resultados = await getDocs(query(collection(db, "trivia_resultados"), where("edicion", "==", edicion)));
+  const porGrupo = new Map(GRUPOS.map((grupo) => [grupo, { grupo, puntos: 0, participantes: 0 }]));
+  resultados.docs.forEach((resultado) => {
+    const dato = resultado.data();
+    const fila = porGrupo.get(dato.grupo);
+    if (fila) { fila.puntos += dato.aciertos || 0; fila.participantes++; }
+  });
+  const filas = [...porGrupo.values()];
   filas.sort((a, b) => b.puntos - a.puntos || (b.participantes ? b.puntos / b.participantes : 0) - (a.participantes ? a.puntos / a.participantes : 0) || a.grupo.localeCompare(b.grupo));
   guardarLocal(claveRanking(edicion), { t: Date.now(), filas });
   return filas;
