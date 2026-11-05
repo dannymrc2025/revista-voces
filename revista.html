@@ -117,7 +117,7 @@
   <script type="module" src="js/visitas.js"></script>
   <script type="module" src="js/reacciones.js"></script>
   <script type="module">
-    import { iniciarTrivia } from "./js/trivia.js";
+    import { iniciarTrivia } from "./js/trivia.js?v=20261105-2";
     const ed = new URLSearchParams(location.search).get("ed");
     if (ed && /^[\w.-]+$/.test(ed)) {
       // Inicializa la UI; el módulo comprueba también que la trivia esté activa.

@@ -9,7 +9,6 @@ const app = initializeApp(firebaseConfig, "visor-trivia");
 const db = getFirestore(app);
 const GRUPOS = ["1A", "1B", "1C", "1D", "1E", "2A", "2B", "2C", "2D", "2E", "3A", "3B", "3C", "3D", "3E"];
 const COLORES = ["#4CAF50", "#4FB3D9", "#E3B14A"];
-const ROLES = ["Alumno", "Docente", "Padre o madre de familia"];
 const $ = (id) => document.getElementById(id);
 const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 const clavePartida = (ed) => `voces-trivia-partida-${ed}`;
@@ -107,22 +106,15 @@ function pantallaInicio(previo) {
   const nombre = document.createElement("input");
   nombre.type = "text"; nombre.minLength = 2; nombre.maxLength = 40; nombre.required = true; nombre.autocomplete = "given-name";
   nombreLabel.append(nombre);
-  const rolLabel = h("label", "", "Soy:");
-  const rol = document.createElement("select");
-  ROLES.forEach((r) => { const o = h("option", "", r); o.value = r; rol.append(o); });
-  rolLabel.append(rol);
   const grupoLabel = h("label", "trivia-grupo", "Grupo");
   const grupo = document.createElement("select");
   grupo.required = true; grupo.append(h("option", "", "Elige tu grupo")); grupo.options[0].value = ""; grupo.append(...gruposPorGrado());
   grupoLabel.append(grupo);
-  const ayuda = h("p", "trivia-ayuda", "Docentes y padres juegan fuera de concurso.");
   const iniciar = h("button", "btn primario", "Comenzar"); iniciar.type = "submit";
-  rol.addEventListener("change", () => { grupoLabel.hidden = rol.value !== "Alumno"; grupo.required = rol.value === "Alumno"; });
-  grupoLabel.hidden = false;
-  form.append(nombreLabel, rolLabel, grupoLabel, ayuda, iniciar);
+  form.append(nombreLabel, grupoLabel, iniciar);
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    identidad = { nombre: nombre.value.trim(), rol: rol.value, grupo: rol.value === "Alumno" ? grupo.value : "" };
+    identidad = { nombre: nombre.value.trim(), rol: "Alumno", grupo: grupo.value };
     respuestas = []; aciertos = 0; indice = 0;
     mostrarPregunta();
   });
@@ -176,29 +168,26 @@ function responder(elegida, opciones, pregunta) {
 }
 
 async function terminar() {
-  const r = { aciertos, total: preguntas.length, grupo: identidad.grupo, nombre: identidad.nombre, rol: identidad.rol };
-  let id = "";
-  if (identidad.rol === "Alumno") {
-    id = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const guardar = (conRespuestas) => {
-      const batch = writeBatch(db);
-      const fecha = serverTimestamp();
-      const nombres = { edicion, nombre: identidad.nombre, grupo: identidad.grupo, aciertos, fecha };
-      if (conRespuestas) nombres.respuestas = [...respuestas];
-      batch.set(doc(db, "trivia_resultados", id), { edicion, grupo: identidad.grupo, aciertos, total: preguntas.length, fecha });
-      batch.set(doc(db, "trivia_nombres", id), nombres);
-      return batch.commit();
-    };
-    try {
-      await guardar(true);
-    } catch (e) {
-      // Compatibilidad con reglas anteriores que no admiten "respuestas".
-      console.warn("Guardado con respuestas rechazado:", e.code || e.message);
-      try { await guardar(false); } catch (e2) {
-        console.warn("No se guardó el resultado:", e2.code || e2.message);
-        $("trivia-pantalla").replaceChildren(h("p", "", "No se pudo guardar tu resultado. Revisa tu conexión e inténtalo de nuevo."));
-        return;
-      }
+  const r = { aciertos, total: preguntas.length, grupo: identidad.grupo, nombre: identidad.nombre };
+  const id = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const guardar = (conRespuestas) => {
+    const batch = writeBatch(db);
+    const fecha = serverTimestamp();
+    const nombres = { edicion, nombre: identidad.nombre, grupo: identidad.grupo, aciertos, fecha };
+    if (conRespuestas) nombres.respuestas = [...respuestas];
+    batch.set(doc(db, "trivia_resultados", id), { edicion, grupo: identidad.grupo, aciertos, total: preguntas.length, fecha });
+    batch.set(doc(db, "trivia_nombres", id), nombres);
+    return batch.commit();
+  };
+  try {
+    await guardar(true);
+  } catch (e) {
+    // Compatibilidad con reglas anteriores que no admiten "respuestas".
+    console.warn("Guardado con respuestas rechazado:", e.code || e.message);
+    try { await guardar(false); } catch (e2) {
+      console.warn("No se guardó el resultado:", e2.code || e2.message);
+      $("trivia-pantalla").replaceChildren(h("p", "", "No se pudo guardar tu resultado. Revisa tu conexión e inténtalo de nuevo."));
+      return;
     }
   }
   guardarLocal(clavePartida(edicion), r);
